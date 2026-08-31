@@ -83,7 +83,7 @@ main {
 #mouse-canvas {
     width: 100%;
     height: 20rem;
-    background-color(--colour-02);
+    background-color: (--colour-02);
     border: var(--border);
     border-radius: 6px;
 }
