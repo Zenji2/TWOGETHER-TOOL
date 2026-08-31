@@ -49,3 +49,30 @@ function toneInit(){
     synth.connect(Tone.Destination);
 }
 
+
+// Keyboard player
+// get letter key buttons
+const keyboardKeys = document.querySelectorAll(".keyboard-key");
+
+// Mouse player
+// canvas
+const mouseCanvas = document.getElementById("mouse-canvas");
+const canvasContext = mouseCanvas.getContext("2d");
+
+// scaling canvas to screen
+function resizeCanvas(){
+    mouseCanvas.width = mouseCanvas.clientWidth;
+    mouseCanvas.height = mouseCanvas.clientHeight;
+    drawCanvasPlaceholder();
+}
+
+// placeholder 4 canvas, will b replaced later with actual canvas
+function drawCanvasPlaceholder(){
+    canvasContext.clearRect(0, 0, textureCanvas.width, textureCanvas.height);
+    canvasContext.fillStyle = "gray";
+    canvasContext.font = "16px sans-serif";
+    canvasContext.fillText("move your mouse here", 16, 32);
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
