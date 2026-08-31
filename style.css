@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+
+
+/* saving our custom variables*/
+/*light mode*/
+:root {
+    --colour-01: black;
+    --colour-02: white;
+    --colour-03: darkgray;
+    --colour-04: lightgray;
+    --border: 0.2rem inset var(--colour-03);
+}
+
+
+/*dark mode*/
+@media (prefers-color-scheme: dark) {
+    :root {
+            --colour-01: #002029;
+            --colour-02: #00303d;
+            --colour-03: #004052;
+            --colour-04: #005066;
+            --colour-05: #00607a;
+        }
+}
+
+body {
+    font-family: "Nunito Sans", sans-serif;
+    background-color: var(--colour-01);
+    color: var(--colour-04);
+}
+
+dialog[open] {
+    background-color: var(--colour-01);
+    color: var(--colour-04);
+    border: 3px dashed var(--colour-02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 6px;
+}
+
+button {
+    color: var(--colour-01);
+    background-color: var(--colour-03);
+    border: 1px solid var(--colour-02);
+    border-radius: 6px;
+    padding: 4px;
+}
+
+img {
+    position: relative;
+    margin: 1rem;
+}
