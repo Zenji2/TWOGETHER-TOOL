@@ -14,12 +14,12 @@
 </head>
 <body>
     <dialog id="intro-modal">
-        <p>I'm going to make some noise!!!</p>
+        <p>TWOGETHER is a two player instrument tool. One of you plays the sound with the keyboard, and the other shapes how it sounds by moving the mouse.</p>
         <button id="intro-modal-close">let's go!</button>
     </dialog>
 
     <header>
-        <h1>Audio Instrument</h1>
+        <h1>TWOGETHER</h1>
     </header>
 
     <main>
@@ -33,6 +33,19 @@
     <!--     image for spatial control -->
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Augusta_Dohlmann_Wild_flowers_%281905%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original"
              alt="painting of flowers in a vase" id="flower-painting" data-note="a3">
+
+
+        <section id="keyboard-player" aria-label="Keyboard player">
+            <h2>Keyboard Player</h2>
+            <p>Press a key to play a note.</p>
+        </section>
+
+
+        <section id="mouse-player" aria-label="Mouse player">
+            <h2>Mouse player</h2>
+            <p>Move your mouse over the canvas to shape the sound.</p>
+            <canvas id="mouse-canvas"></canvas>
+        </section>
     </main>
 </body>
 </html>
