@@ -96,3 +96,7 @@ header h1 {
     height: 20rem;
     background-color: (--colour-02);
 }
+
+.keyboard-key.active {
+    background-color: var(--colour-04);
+}

@@ -54,6 +54,41 @@ function toneInit(){
 // get letter key buttons
 const keyboardKeys = document.querySelectorAll(".keyboard-key");
 
+// find pressed button
+function findKeyboardKey(pressedKey) {
+    let letter = pressedKey.toUpperCase();
+    for (const key of keyboardKeys) {
+        if (key.textContent === letter) {
+            return key;
+        }
+    }
+    return null;
+}
+// only want to b true while key is held down
+function handleKeyDown(e) {
+    if (e.repeat) {
+        return;
+    }
+    let key = findKeyboardKey(e.key);
+    if (key === null) {
+        return;
+    }
+    key.classList.add("active");
+    synth.triggerAttack(key.dataset.note);
+}
+
+function handleKeyUp(e) {
+    let key = findKeyboardKey(e.key);
+    if (key === null) {
+        return;
+    }
+    key.classList.remove("active");
+    synth.triggerRelease(key.dataset.note);
+}
+
+window.addEventListener("keydown", handleKeyDown);
+window.addEventListener("keyup", handleKeyUp);
+
 // Mouse player
 // canvas
 const mouseCanvas = document.getElementById("mouse-canvas");
@@ -68,7 +103,7 @@ function resizeCanvas(){
 
 // placeholder 4 canvas, will b replaced later with actual canvas
 function drawCanvasPlaceholder(){
-    canvasContext.clearRect(0, 0, textureCanvas.width, textureCanvas.height);
+    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
     canvasContext.fillStyle = "gray";
     canvasContext.font = "16px sans-serif";
     canvasContext.fillText("move your mouse here", 16, 32);
