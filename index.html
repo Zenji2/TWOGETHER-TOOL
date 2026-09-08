@@ -21,12 +21,9 @@
         <h1>TWOGETHER</h1>
     </header>
 
-    <main>
+    <main id="game">
     <!--     keyboard player -->
-        <section id="keyboard-player" aria-label="Keyboard player">
-            <h2>Keyboard Player</h2>
-            <p>Press a key to play a note.</p>
-            <div class="key-row">
+            <div id="keyboard-player" class="key-row" aria-label="Keyboard player">
                 <button class="keyboard-key" data-note="C4">A</button>
                 <button class="keyboard-key" data-note="D4">S</button>
                 <button class="keyboard-key" data-note="E4">D</button>
@@ -40,10 +37,7 @@
         </section>
 
     <!--     mouse player -->
-        <section id="mouse-player" aria-label="Mouse player">
-            <h2>Mouse player</h2>
-            <p>Move your mouse over the canvas to shape the sound.</p>
-            <canvas id="mouse-canvas"></canvas>
+            <canvas id="mouse-canvas" aria label="Mouse player"></canvas>
         </section>
     </main>
 </body>
