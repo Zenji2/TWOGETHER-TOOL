@@ -43,10 +43,16 @@ introModal.addEventListener("close", toneInit);
 
 // change to polysynth
 const synth = new Tone.PolySynth();
+// tone and reverb
+const filter = new Tone.Filter(1000, "lowpass");
+const reverb = new Tone.JCReverb(0.4);
+
 
 function toneInit(){
     // connect synth to audio output
-    synth.connect(Tone.Destination);
+    synth.connect(filter);
+    filter.connect(reverb);
+    reverb.connect(Tone.Destination);
 }
 
 
@@ -98,16 +104,58 @@ const canvasContext = mouseCanvas.getContext("2d");
 function resizeCanvas(){
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawCanvasPlaceholder();
+    drawQuadrants();
 }
 
-// placeholder 4 canvas, will b replaced later with actual canvas
-function drawCanvasPlaceholder(){
+// cross in canvas to split into 4 sections
+function drawQuadrants() {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+
+    let midX = mouseCanvas.width / 2;
+    let midY = mouseCanvas.height / 2;
+
+    canvasContext.strokeStyle = "navy";
+    canvasContext.lineWidth = 2;
+
+    canvasContext.beginPath();
+    // y line
+    canvasContext.moveTo(midX, 0);
+    canvasContext.lineTo(midX, mouseCanvas.height);
+    // x line
+    canvasContext.moveTo(0, midY);
+    canvasContext.lineTo(mouseCanvas.width, midY);
+    canvasContext.stroke();
+
+    // text for now
     canvasContext.fillStyle = "gray";
     canvasContext.font = "16px sans-serif";
-    canvasContext.fillText("move your mouse here", 16, 32);
+    canvasContext.textAlign = "center";
+    canvasContext.textBaseline = "middle";
+
+    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
+    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
+    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
+    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
 }
+
+// map range
+function mapRange(value, inMin, inMax, outMin, outMax) {
+    return outMin + ((value - inMin) * (outMax - outMin)) / (inMax - inMin);
+}
+
+function handleMouseMove(e) {
+    let x = e.offsetX;
+    let y = e.offsetY;
+// filter control
+    let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
+
+    filter.frequency.rampTo(frequency, 0.05);
+
+    let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
+    reverb.wet.rampTo(wetness, 0.05);
+}
+
+mouseCanvas.addEventListener("mousemove", handleMouseMove);
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
