@@ -107,23 +107,23 @@ function resizeCanvas(){
     drawQuadrants();
 }
 
-// cross in canvas to split into 4 sections
+// change layout
 function drawQuadrants() {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
 
     let midX = mouseCanvas.width / 2;
     let midY = mouseCanvas.height / 2;
+    let maxRadius = Math.min(midX, midY);
 
     canvasContext.strokeStyle = "navy";
     canvasContext.lineWidth = 2;
 
     canvasContext.beginPath();
-    // y line
-    canvasContext.moveTo(midX, 0);
-    canvasContext.lineTo(midX, mouseCanvas.height);
-    // x line
-    canvasContext.moveTo(0, midY);
-    canvasContext.lineTo(mouseCanvas.width, midY);
+    canvasContext.arc(midX, midY, maxRadius / 2, 0 * Math.PI * 2);
+    canvasContext.stroke();
+
+    canvasContext.beginPath();
+    canvasContext.arc(midX, midY, maxRadius, 0 * Math.PI * 2);
     canvasContext.stroke();
 
     // text for now
@@ -132,10 +132,9 @@ function drawQuadrants() {
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
 
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
-    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
-    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+    canvasContext.fillText("closer = duller, further = brighter", midX, midY - 10);
+    canvasContext.fillText("angle around the center = reverb", midX, midY + 10);
+
 }
 
 // map range
@@ -146,12 +145,23 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 function handleMouseMove(e) {
     let x = e.offsetX;
     let y = e.offsetY;
+
+    let midX = mouseCanvas.width / 2;
+    let midY = mouseCanvas.height / 2;
+    let maxDistance = Math.sqrt(midX * midX + midY * midY);
+
+    // distance from center
+    let dx = x - midX;
+    let dy = y - midY;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
 // filter control
-    let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
+    let frequency = mapRange(distance, 0, maxDistance, 200, 5000);
 
     filter.frequency.rampTo(frequency, 0.05);
 
-    let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
+    let angle = Math.atan2(dy, dx) + Math.PI;
+    let wetness = mapRange(angle, 0, Math.PI * 2, 0, 1);
     reverb.wet.rampTo(wetness, 0.05);
 }
 
