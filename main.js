@@ -132,10 +132,10 @@ function drawQuadrants() {
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
 
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
+    canvasContext.fillText("+tone, -reverb", midX / 2, midY / 2);
     canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
     canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+    canvasContext.fillText("-tone, +reverb", midX + midX / 2, midY + midY / 2);
 }
 
 // map range
@@ -147,11 +147,11 @@ function handleMouseMove(e) {
     let x = e.offsetX;
     let y = e.offsetY;
 // filter control
-    let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
+    let frequency = mapRange(y, 0, mouseCanvas.height, 5000, 200);
 
     filter.frequency.rampTo(frequency, 0.05);
 
-    let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
+    let wetness = mapRange(x, 0, mouseCanvas.width, 0, 1);
     reverb.wet.rampTo(wetness, 0.05);
 }
 
