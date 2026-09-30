@@ -104,38 +104,27 @@ const canvasContext = mouseCanvas.getContext("2d");
 function resizeCanvas(){
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawQuadrants();
+    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
 }
 
-// cross in canvas to split into 4 sections
-function drawQuadrants() {
+// draws a trail where older trails fade out and become smaller tthan new ones
+let trail = [];
+const maxTrailLength = 20;
+ 
+function drawTrail() {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
-
-    let midX = mouseCanvas.width / 2;
-    let midY = mouseCanvas.height / 2;
-
-    canvasContext.strokeStyle = "navy";
-    canvasContext.lineWidth = 2;
-
-    canvasContext.beginPath();
-    // y line
-    canvasContext.moveTo(midX, 0);
-    canvasContext.lineTo(midX, mouseCanvas.height);
-    // x line
-    canvasContext.moveTo(0, midY);
-    canvasContext.lineTo(mouseCanvas.width, midY);
-    canvasContext.stroke();
-
-    // text for now
-    canvasContext.fillStyle = "gray";
-    canvasContext.font = "16px sans-serif";
-    canvasContext.textAlign = "center";
-    canvasContext.textBaseline = "middle";
-
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
-    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
-    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+ 
+    for (let i = 0; i < trail.length; i++) {
+        let point = trail[i];
+        let progress = i / trail.length;
+        let radius = mapRange(progress, 0, 1, 2, 10);
+        let opacity = mapRange(progress, 0, 1, 0.1, 0.8);
+ 
+        canvasContext.beginPath();
+        canvasContext.fillStyle = "rgba(0, 0, 128, " + opacity + ")";
+        canvasContext.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        canvasContext.fill();
+    }
 }
 
 // map range
@@ -153,6 +142,12 @@ function handleMouseMove(e) {
 
     let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
     reverb.wet.rampTo(wetness, 0.05);
+
+    trail.push({ x: x, y: y });
+    if (trail.length > maxTrailLength) {
+        trail.shift();
+    }
+    drawTrail();   
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
