@@ -104,38 +104,46 @@ const canvasContext = mouseCanvas.getContext("2d");
 function resizeCanvas(){
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawQuadrants();
+    drawGrid();
 }
 
-// cross in canvas to split into 4 sections
-function drawQuadrants() {
+// tone and reverb steps
+const numToneSteps = 8;
+const numReverbSteps = 4;
+ 
+// grid lines
+function drawGrid(highlightColumn, highlightRow) {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
-
-    let midX = mouseCanvas.width / 2;
-    let midY = mouseCanvas.height / 2;
-
+ 
+    let columnWidth = mouseCanvas.width / numToneSteps;
+    let rowHeight = mouseCanvas.height / numReverbSteps;
+ 
+    if (highlightColumn !== undefined) {
+        canvasContext.fillStyle = "lightblue";
+        canvasContext.fillRect(
+            highlightColumn * columnWidth,
+            highlightRow * rowHeight,
+            columnWidth,
+            rowHeight
+        );
+    }
+ 
     canvasContext.strokeStyle = "navy";
-    canvasContext.lineWidth = 2;
-
-    canvasContext.beginPath();
-    // y line
-    canvasContext.moveTo(midX, 0);
-    canvasContext.lineTo(midX, mouseCanvas.height);
-    // x line
-    canvasContext.moveTo(0, midY);
-    canvasContext.lineTo(mouseCanvas.width, midY);
-    canvasContext.stroke();
-
-    // text for now
-    canvasContext.fillStyle = "gray";
-    canvasContext.font = "16px sans-serif";
-    canvasContext.textAlign = "center";
-    canvasContext.textBaseline = "middle";
-
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
-    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
-    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+    canvasContext.lineWidth = 1;
+ 
+    for (let col = 1; col < numToneSteps; col++) {
+        canvasContext.beginPath();
+        canvasContext.moveTo(col * columnWidth, 0);
+        canvasContext.lineTo(col * columnWidth, mouseCanvas.height);
+        canvasContext.stroke();
+    }
+ 
+    for (let row = 1; row < numReverbSteps; row++) {
+        canvasContext.beginPath();
+        canvasContext.moveTo(0, row * rowHeight);
+        canvasContext.lineTo(mouseCanvas.width, row * rowHeight);
+        canvasContext.stroke();
+    }
 }
 
 // map range
@@ -146,13 +154,21 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 function handleMouseMove(e) {
     let x = e.offsetX;
     let y = e.offsetY;
-// filter control
-    let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
+
+    // detect mouse whens over each grid
+    let columnWidth = mouseCanvas.width / numToneSteps;
+    let rowHeight = mouseCanvas.height / numReverbSteps;
+    let column = Math.floor(x / columnWidth);
+    let row = Math.floor(y / rowHeight);   
+
+    let frequency = mapRange(column, 0, numToneSteps - 1, 200, 5000);
 
     filter.frequency.rampTo(frequency, 0.05);
 
-    let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
+    let wetness = mapRange(row, 0, numReverbSteps - 1, 1, 0);
     reverb.wet.rampTo(wetness, 0.05);
+
+    drawGrid(column, row);
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
