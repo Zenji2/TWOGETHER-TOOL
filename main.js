@@ -104,38 +104,65 @@ const canvasContext = mouseCanvas.getContext("2d");
 function resizeCanvas(){
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawQuadrants();
+    trail = [];
+    drawScene();
 }
 
-// cross in canvas to split into 4 sections
-function drawQuadrants() {
+let trail = [];
+const maxTrailLength = 50;
+ 
+function drawScene() {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
-
-    let midX = mouseCanvas.width / 2;
-    let midY = mouseCanvas.height / 2;
-
-    canvasContext.strokeStyle = "navy";
-    canvasContext.lineWidth = 2;
-
-    canvasContext.beginPath();
-    // y line
-    canvasContext.moveTo(midX, 0);
-    canvasContext.lineTo(midX, mouseCanvas.height);
-    // x line
-    canvasContext.moveTo(0, midY);
-    canvasContext.lineTo(mouseCanvas.width, midY);
-    canvasContext.stroke();
-
-    // text for now
+    drawTrail();
+    drawToneGuide();
+}
+ 
+// the trail is our reverb signifier, since reverb comes from speed,
+// not a location, there's nothing sensible to draw a marker "at"
+function drawTrail() {
+    for (let i = 0; i < trail.length; i++) {
+        let point = trail[i];
+        let progress = i / trail.length;
+        let radius = mapRange(progress, 0, 1, 2, 9);
+        let opacity = mapRange(progress, 0, 1, 0.15, 0.85);
+ 
+        canvasContext.beginPath();
+        canvasContext.fillStyle = "rgba(0, 0, 128, " + opacity + ")";
+        canvasContext.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        canvasContext.fill();
+    }
+}
+ 
+// the tone guide is just one thin bar along the top, since tone only cares
+// about x position, there's no reason to divide the whole canvas up
+// (kept it up here, not the bottom, so it doesn't sit under the keyboard keys)
+function drawToneGuide() {
+    let barHeight = 16;
+    let barY = 60;
+ 
+    let gradient = canvasContext.createLinearGradient(0, 0, mouseCanvas.width, 0);
+    gradient.addColorStop(0, "navy");
+    gradient.addColorStop(1, "blue");
+    canvasContext.fillStyle = gradient;
+    canvasContext.fillRect(0, barY, mouseCanvas.width, barHeight);
+ 
+    // labels sit just below the thin bar rather than crammed inside it
     canvasContext.fillStyle = "gray";
-    canvasContext.font = "16px sans-serif";
-    canvasContext.textAlign = "center";
-    canvasContext.textBaseline = "middle";
-
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
-    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
-    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+    canvasContext.font = "14px sans-serif";
+    canvasContext.textAlign = "left";
+    canvasContext.fillText("less tone", 4, barY + barHeight + 16);
+    canvasContext.textAlign = "right";
+    canvasContext.fillText("more tone", mouseCanvas.width - 4, barY + barHeight + 16);
+ 
+    // marker showing the current x position on the bar
+    if (lastX !== null) {
+        canvasContext.strokeStyle = "navy";
+        canvasContext.lineWidth = 3;
+        canvasContext.beginPath();
+        canvasContext.moveTo(lastX, barY);
+        canvasContext.lineTo(lastX, barY + barHeight);
+        canvasContext.stroke();
+    }
 }
 
 // map range
@@ -146,13 +173,29 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 function handleMouseMove(e) {
     let x = e.offsetX;
     let y = e.offsetY;
+    let now = performance.now();
+
 // filter control
     let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
 
     filter.frequency.rampTo(frequency, 0.05);
 
-    let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
-    reverb.wet.rampTo(wetness, 0.05);
+// speed
+
+    if (lastX !== null) {
+        let distance = Math.sqrt((x - lastX) ** 2 + (y - lastY) ** 2);
+        let timePassed = (now - lastTime) / 1000;
+        let speed = distance / timePassed;
+    
+
+    let wetness = Math.min(mapRange(speed, 0, 3000, 0, 1), 1);
+    reverb.wet.rampTo(wetness, 0.1);
+
+    }
+
+    lastX = x;
+    lastY = y;
+    lastTime = now;
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
