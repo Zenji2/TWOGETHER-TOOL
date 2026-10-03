@@ -100,42 +100,16 @@ window.addEventListener("keyup", handleKeyUp);
 const mouseCanvas = document.getElementById("mouse-canvas");
 const canvasContext = mouseCanvas.getContext("2d");
 
+let currentX = null;
+let currentY = null;
+let currentFrequency = 200;
+let currentWetness = 0;
+
 // scaling canvas to screen
 function resizeCanvas(){
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawQuadrants();
-}
-
-// cross in canvas to split into 4 sections
-function drawQuadrants() {
-    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
-
-    let midX = mouseCanvas.width / 2;
-    let midY = mouseCanvas.height / 2;
-
-    canvasContext.strokeStyle = "navy";
-    canvasContext.lineWidth = 2;
-
-    canvasContext.beginPath();
-    // y line
-    canvasContext.moveTo(midX, 0);
-    canvasContext.lineTo(midX, mouseCanvas.height);
-    // x line
-    canvasContext.moveTo(0, midY);
-    canvasContext.lineTo(mouseCanvas.width, midY);
-    canvasContext.stroke();
-
-    // text for now
-    canvasContext.fillStyle = "gray";
-    canvasContext.font = "16px sans-serif";
-    canvasContext.textAlign = "center";
-    canvasContext.textBaseline = "middle";
-
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
-    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
-    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+    drawFeedback();
 }
 
 // map range
@@ -143,9 +117,62 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
     return outMin + ((value - inMin) * (outMax - outMin)) / (inMax - inMin);
 }
 
+function drawFeedback() {
+    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+
+    //// Tone meter
+    let meterMargin = 40;
+    let meterWidth = mouseCanvas.width - meterMargin * 2;
+    let meterHeight = 20;
+    let toneY = 60;
+
+    // bg
+    canvasContext.fillStyle = "lightgray";
+    canvasContext.fillRect(meterMargin, toneY, meterWidth, meterHeight);
+
+    let toneProgress = mapRange(currentFrequency, 200, 5000, 0, 1);
+    canvasContext.fillStyle = "navy";
+    canvasContext.fillRect(meterMargin, toneY, meterWidth * toneProgress, meterHeight);
+
+    canvasContext.fillStyle = "gray";
+    canvasContext.font = "16px sans-serif";
+    canvasContext.textAlign = "left";
+    canvasContext.fillText("Tone / brightness", meterMargin, toneY - 10);
+
+    canvasContext.textAlign = "right";
+    canvasContext.fillText(Math.round(currentFrequency) + " Hz", mouseCanvas.width - meterMargin, toneY - 10);
+
+    /// Reverb meter
+    let reverbY = 130;
+
+    canvasContext.fillStyle = "lightgray";
+    canvasContext.fillRect(meterMargin, reverbY, meterWidth, meterHeight);
+
+    canvasContext.fillStyle = "navy";
+    canvasContext.fillRect(meterMargin, reverbY, meterWidth * currentWetness, meterHeight);
+
+    canvasContext.fillStyle = "gray";
+    canvasContext.textAlign = "left";
+    canvasContext.fillText("Reverb", meterMargin, reverbY - 10);
+
+    canvasContext.textAlign = "right";
+    canvasContext.fillText(Math.round(currentWetness * 100) + "%", mouseCanvas.width - meterMargin, reverbY - 10);
+
+    /// Mouse point
+    if (currentX !== null && currentY !== null) {
+        canvasContext.beginPath();
+        canvasContext.fillStyle = "navy";
+        canvasContext.arc(currentX, currentY, 10, 0, Math.PI * 2);
+        canvasContext.fill();
+    }
+}
+
 function handleMouseMove(e) {
     let x = e.offsetX;
     let y = e.offsetY;
+    currentX = x;
+    currentY = y;
+
 // filter control
     let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
 
@@ -153,6 +180,10 @@ function handleMouseMove(e) {
 
     let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
     reverb.wet.rampTo(wetness, 0.05);
+
+    currentFrequency = frequency;
+    currentWetness = wetness;
+    drawFeedback();
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
