@@ -119,11 +119,11 @@ function drawQuadrants() {
     canvasContext.lineWidth = 2;
 
     canvasContext.beginPath();
-    canvasContext.arc(midX, midY, maxRadius / 2, 0 * Math.PI * 2);
+    canvasContext.arc(midX, midY, maxRadius / 2, 0, Math.PI * 2);
     canvasContext.stroke();
 
     canvasContext.beginPath();
-    canvasContext.arc(midX, midY, maxRadius, 0 * Math.PI * 2);
+    canvasContext.arc(midX, midY, maxRadius, 0, Math.PI * 2);
     canvasContext.stroke();
 
     // text for now
