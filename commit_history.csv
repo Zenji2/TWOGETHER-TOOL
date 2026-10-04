@@ -1,0 +1,34 @@
+Zenji2,Sat Sep 19 13:16:36 2026 +1000,Made layout bigger,-Changed height to 100% to fill whole screen instead of it being a small section.
+
+Zenji2,Sat Sep 19 13:13:23 2026 +1000,Made mouse function,-Added function to moving mouse
+-Added quadrant section to visualise
+-Added tone/reverb change
+
+Zenji2,Tue Sep 8 21:38:55 2026 +1000,Added sound and highlight key,-When letter key is held it makes sound
+-When letter key is stopped being held down it stops sound
+-Made visual of key light up corresponding to key letter pressed
+
+Zenji2,Tue Sep 8 21:02:32 2026 +1000,Changed layout,-Made the canvas take up whole screen
+-Placed letter keys at bottom for more space on screen
+
+Zenji2,Mon Aug 31 13:23:13 2026 +1000,Update style.css,
+Zenji2,Mon Aug 31 13:11:31 2026 +1000,Updated style,-Added a main display visual
+-Visualised the canvas of mouse player
+-Made keyboard letters bigger
+
+Zenji2,Mon Aug 31 13:07:37 2026 +1000,Added temp canvas and const for players,-Added const for keyboard and mouse to wire notes later
+-Made a temporary canvas for now
+
+Zenji2,Mon Aug 31 13:00:26 2026 +1000,Removed old code,-Deleted old code from audioInstrument project
+
+Zenji2,Mon Aug 31 12:54:59 2026 +1000,Removed old code,-Deleted any old code from audioInstrument that doesn't help
+
+Zenji2,Mon Aug 31 12:51:13 2026 +1000,Add keyboard keys,-Added keyboard button visuals and assigned note to them
+
+Zenji2,Mon Aug 31 12:46:40 2026 +1000,Updated index,-Changed title from audio instrument to TWOGETHER
+-Added a context dialog
+-Added sections for both players
+
+Zenji2,Mon Aug 31 12:26:59 2026 +1000,Cloned audioInstrument code,-copied code from audioInstrument project
+
+Zenji2,Mon Aug 31 12:23:53 2026 +1000,Initial commit,
