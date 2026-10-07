@@ -104,38 +104,29 @@ const canvasContext = mouseCanvas.getContext("2d");
 function resizeCanvas(){
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawQuadrants();
+    drawBlob(200, 0);
 }
 
 // cross in canvas to split into 4 sections
-function drawQuadrants() {
+function drawBlob(frequency, wetness) {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
 
     let midX = mouseCanvas.width / 2;
     let midY = mouseCanvas.height / 2;
 
-    canvasContext.strokeStyle = "navy";
-    canvasContext.lineWidth = 2;
+    // more tone makes the blob bigger
+    let radius = mapRange(frequency, 200, 5000, 20, 150);
+    // more reverb makes glow bigger
+    let glow = mapRange(wetness, 0, 1, 0, 60);
 
+    canvasContext.save();
+    canvasContext.shadowColor = "blue";
+    canvasContext.shadowBlur = glow;
+    canvasContext.fillStyle = "navy";
     canvasContext.beginPath();
-    // y line
-    canvasContext.moveTo(midX, 0);
-    canvasContext.lineTo(midX, mouseCanvas.height);
-    // x line
-    canvasContext.moveTo(0, midY);
-    canvasContext.lineTo(mouseCanvas.width, midY);
-    canvasContext.stroke();
-
-    // text for now
-    canvasContext.fillStyle = "gray";
-    canvasContext.font = "16px sans-serif";
-    canvasContext.textAlign = "center";
-    canvasContext.textBaseline = "middle";
-
-    canvasContext.fillText("-tone, +reverb", midX / 2, midY / 2);
-    canvasContext.fillText("+tone, +reverb", midX + midX / 2, midY / 2);
-    canvasContext.fillText("-tone, -reverb", midX / 2, midY + midY / 2);
-    canvasContext.fillText("+tone, -reverb", midX + midX / 2, midY + midY / 2);
+    canvasContext.arc(midX, midY, radius, 0, Math.PI * 2);
+    canvasContext.fill();
+    canvasContext.restore();
 }
 
 // map range
@@ -153,6 +144,8 @@ function handleMouseMove(e) {
 
     let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
     reverb.wet.rampTo(wetness, 0.05);
+
+    drawBlob(frequency, wetness);
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
