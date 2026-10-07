@@ -127,6 +127,27 @@ function drawBlob(frequency, wetness) {
     canvasContext.arc(midX, midY, radius, 0, Math.PI * 2);
     canvasContext.fill();
     canvasContext.restore();
+    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+}
+
+// draws a trail where older trails fade out and become smaller tthan new ones
+let trail = [];
+const maxTrailLength = 20;
+ 
+function drawTrail() {
+    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+ 
+    for (let i = 0; i < trail.length; i++) {
+        let point = trail[i];
+        let progress = i / trail.length;
+        let radius = mapRange(progress, 0, 1, 2, 10);
+        let opacity = mapRange(progress, 0, 1, 0.1, 0.8);
+ 
+        canvasContext.beginPath();
+        canvasContext.fillStyle = "rgba(0, 0, 128, " + opacity + ")";
+        canvasContext.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        canvasContext.fill();
+    }
 }
 
 // map range
@@ -146,6 +167,11 @@ function handleMouseMove(e) {
     reverb.wet.rampTo(wetness, 0.05);
 
     drawBlob(frequency, wetness);
+    trail.push({ x: x, y: y });
+    if (trail.length > maxTrailLength) {
+        trail.shift();
+    }
+    drawTrail();   
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
