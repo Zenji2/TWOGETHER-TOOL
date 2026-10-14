@@ -100,49 +100,51 @@ window.addEventListener("keyup", handleKeyUp);
 const mouseCanvas = document.getElementById("mouse-canvas");
 const canvasContext = mouseCanvas.getContext("2d");
 
-// scaling canvas to screen
-function resizeCanvas(){
+let trail = [];
+const maxTrailLength = 20;
+
+let currentFrequency = 200;
+let currentWetness = 0;
+
+function resizeCanvas() {
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
-    drawBlob(200, 0);
+    drawScene();
 }
 
-// cross in canvas to split into 4 sections
-function drawBlob(frequency, wetness) {
+function drawScene() {
     canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+    drawBlob(currentFrequency, currentWetness);
+    drawTrail();
+}
 
+// the blob that shows visual feedback
+function drawBlob(frequency, wetness) {
     let midX = mouseCanvas.width / 2;
     let midY = mouseCanvas.height / 2;
 
-    // more tone makes the blob bigger
     let radius = mapRange(frequency, 200, 5000, 20, 150);
-    // more reverb makes glow bigger
     let glow = mapRange(wetness, 0, 1, 0, 60);
 
     canvasContext.save();
     canvasContext.shadowColor = "blue";
     canvasContext.shadowBlur = glow;
     canvasContext.fillStyle = "navy";
+
     canvasContext.beginPath();
     canvasContext.arc(midX, midY, radius, 0, Math.PI * 2);
     canvasContext.fill();
     canvasContext.restore();
-    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
 }
 
-// draws a trail where older trails fade out and become smaller tthan new ones
-let trail = [];
-const maxTrailLength = 20;
- 
+// draw trail of mouse movement
 function drawTrail() {
-    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
- 
     for (let i = 0; i < trail.length; i++) {
         let point = trail[i];
         let progress = i / trail.length;
         let radius = mapRange(progress, 0, 1, 2, 10);
         let opacity = mapRange(progress, 0, 1, 0.1, 0.8);
- 
+
         canvasContext.beginPath();
         canvasContext.fillStyle = "rgba(0, 0, 128, " + opacity + ")";
         canvasContext.arc(point.x, point.y, radius, 0, Math.PI * 2);
@@ -150,31 +152,46 @@ function drawTrail() {
     }
 }
 
-// map range
+// map a value from one range to another
 function mapRange(value, inMin, inMax, outMin, outMax) {
     return outMin + ((value - inMin) * (outMax - outMin)) / (inMax - inMin);
 }
 
+// handle mouse movement
 function handleMouseMove(e) {
     let x = e.offsetX;
     let y = e.offsetY;
-// filter control
-    let frequency = mapRange(x, 0, mouseCanvas.width, 200, 5000);
 
+    let midX = mouseCanvas.width / 2;
+    let midY = mouseCanvas.height / 2;
+
+    let dx = x - midX;
+    let dy = y - midY;
+
+// distance from centre controls tone
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    let maxDistance = Math.sqrt(midX * midX + midY * midY);
+    let frequency = mapRange(distance, 0, maxDistance, 200, 5000);
     filter.frequency.rampTo(frequency, 0.05);
 
-    let wetness = mapRange(y, 0, mouseCanvas.height, 1, 0);
+// angle around centre controls reverb
+    let angle = Math.atan2(dy, dx) + Math.PI;
+    let wetness = mapRange(angle, 0, Math.PI * 2, 0, 1);
     reverb.wet.rampTo(wetness, 0.05);
 
-    drawBlob(frequency, wetness);
+    currentFrequency = frequency;
+    currentWetness = wetness;
+
     trail.push({ x: x, y: y });
+
     if (trail.length > maxTrailLength) {
         trail.shift();
     }
-    drawTrail();   
+
+    drawScene();
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
-
 window.addEventListener("resize", resizeCanvas);
+
 resizeCanvas();
