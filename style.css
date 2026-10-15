@@ -15,11 +15,11 @@
 /*dark mode*/
 @media (prefers-color-scheme: dark) {
     :root {
-            --colour-01: #002029;
-            --colour-02: #00303d;
-            --colour-03: #004052;
-            --colour-04: #005066;
-            --colour-05: #00607a;
+            --colour-01: #264a66;
+            --colour-02: #6d8cae;
+            --colour-03: #7595bd;
+            --colour-04: #6c90b1;
+            --colour-05: #3c5c65;
         }
 }
 
