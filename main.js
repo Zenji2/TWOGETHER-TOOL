@@ -39,22 +39,39 @@ introModal.addEventListener("close", toneInit);
 
 
 ///////// Tone
-// create instrument
+///////// Tone
 
-// change to polysynth
-const synth = new Tone.PolySynth();
-// tone and reverb
-const filter = new Tone.Filter(1000, "lowpass");
-const reverb = new Tone.JCReverb(0.4);
+const synth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: {
+        type: "sine"
+    },
+    envelope: {
+        attack: 0.08,
+        decay: 0.2,
+        sustain: 0.6,
+        release: 1.2
+    },
+    volume: -12
+});
 
+const filter = new Tone.Filter({
+    frequency: 1200,
+    type: "lowpass",
+    rolloff: -12,
+    Q: 1
+});
 
-function toneInit(){
-    // connect synth to audio output
+const reverb = new Tone.JCReverb(0.25);
+reverb.wet.value = 0.2;
+
+const limiter = new Tone.Limiter(-6);
+
+function toneInit() {
     synth.connect(filter);
     filter.connect(reverb);
-    reverb.connect(Tone.Destination);
+    reverb.connect(limiter);
+    limiter.toDestination();
 }
-
 
 // Keyboard player
 // get letter key buttons
@@ -171,13 +188,13 @@ function handleMouseMove(e) {
 // distance from centre controls tone
     let distance = Math.sqrt(dx * dx + dy * dy);
     let maxDistance = Math.sqrt(midX * midX + midY * midY);
-    let frequency = mapRange(distance, 0, maxDistance, 200, 5000);
-    filter.frequency.rampTo(frequency, 0.05);
+    let frequency = mapRange(distance, 0, maxDistance, 300, 3000);
+    filter.frequency.rampTo(frequency, 0.1);
 
 // angle around centre controls reverb
     let angle = Math.atan2(dy, dx) + Math.PI;
-    let wetness = mapRange(angle, 0, Math.PI * 2, 0, 1);
-    reverb.wet.rampTo(wetness, 0.05);
+    let wetness = mapRange(angle, 0, Math.PI * 2, 0.05, 0.55);
+    reverb.wet.rampTo(wetness, 0.15);
 
     currentFrequency = frequency;
     currentWetness = wetness;
