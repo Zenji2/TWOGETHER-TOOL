@@ -192,12 +192,19 @@ function handleMouseMove(e) {
     filter.frequency.rampTo(frequency, 0.1);
 
 // angle around centre controls reverb
-    let angle = Math.atan2(dy, dx) + Math.PI;
-    let wetness = mapRange(angle, 0, Math.PI * 2, 0.05, 0.55);
+    let angle = Math.atan2(dy, dx);
+    let wetness = mapRange((1 - Math.cos(angle)) / 2, 0, 1, 0.05, 0.55);
     reverb.wet.rampTo(wetness, 0.15);
 
+    // only update reverb when mouse is away from centre
+    if (distance > 20) {
+        let angle = Math.atan2(dy, dx);
+        let wetness = mapRange((1 - Math.cos(angle)) / 2, 0, 1, 0.05, 0.55);
+        reverb.wet.rampTo(wetness, 0.15);
+        currentWetness = wetness;
+
+}
     currentFrequency = frequency;
-    currentWetness = wetness;
 
     trail.push({ x: x, y: y });
 
