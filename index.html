@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> TWOGETHER</title>
+    <title>TWOGETHER</title>
     <link rel="stylesheet" href="reset.css">
     <link rel="stylesheet" href="style.css">
 
-    <script src="https://unpkg.com/tone"></script>
+    <script src="vendor/Tone-14.8.49.js"></script>
     <script src="main.js" defer></script>
     
 </head>
@@ -23,7 +23,7 @@
 
     <main id="game">
     <!--     keyboard player -->
-            <div id="keyboard-player" class="key-row" aria-label="Keyboard player">
+            <section id="keyboard-player" class="key-row" aria-label="Keyboard player">
                 <button class="keyboard-key" data-note="C4">A</button>
                 <button class="keyboard-key" data-note="D4">S</button>
                 <button class="keyboard-key" data-note="E4">D</button>
@@ -33,12 +33,11 @@
                 <button class="keyboard-key" data-note="B4">J</button>
                 <button class="keyboard-key" data-note="C5">K</button>
                 <button class="keyboard-key" data-note="D5">L</button>
-            </div>
+            </section>
         </section>
 
     <!--     mouse player -->
             <canvas id="mouse-canvas" aria label="Mouse player"></canvas>
-        </section>
     </main>
 </body>
 </html>
