@@ -86,6 +86,7 @@ async function toneInit() {
 // Keyboard player
 // get letter key buttons
 const keyboardKeys = document.querySelectorAll(".keyboard-key");
+const pitchInfo = document.getElementById("pitch-info");
 // semitones and octaves
 const semitoneShifts = [-2, -1, 0, 1, 2];
 const octaveShifts = [12, 0, -12];
@@ -98,19 +99,29 @@ function getMappedNote(baseNote, column = mouseColumn, row = mouseRow) {
     return Tone.Frequency(baseNote).transpose(semitoneShifts[column] + octaveShifts[row]).toNote();
 }
 
-// keep the button tooltips in sync with the mouse area
+// display the same notes as tiles when moved
 function updateKeyboardHints() {
     for (const key of keyboardKeys) {
-        const description = key.textContent + " plays " + getMappedNote(key.dataset.note);
-        key.title = description;
-        key.setAttribute("aria-label", description);
+        const note = tileNote(getMappedNote(key.dataset.note));
+        key.querySelector("small").textContent = note;
+        key.setAttribute("aria-label", key.dataset.key + ", " + note);
     }
+    updatePitchReadout();
 }
+
+function updatePitchReadout() {
+    const shift = semitoneShifts[mouseColumn];
+    const octave = octaveShifts[mouseRow] / 12;
+    const horizontal = shift === 0 ? "original pitch" : signedNumber(shift) + (Math.abs(shift) === 1 ? " semitone" : " semitones");
+    const vertical = octave === 0 ? "original octave" : signedNumber(octave) + " octave";
+    pitchInfo.textContent = "X: " + horizontal + " \u00B7 Y: " + vertical;
+}
+
 // find pressed button
 function findKeyboardKey(pressedKey) {
-    let letter = pressedKey.toUpperCase();
+    const letter = pressedKey.toUpperCase();
     for (const key of keyboardKeys) {
-        if (key.textContent === letter) {
+        if (key.dataset.key === letter) {
             return key;
         }
     }

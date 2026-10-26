@@ -103,3 +103,24 @@ header h1 {
 .keyboard-key.active {
     background-color: var(--colour-04);
 }
+
+:root { --game-ink: #d9e5f2; --game-guide: #8ba6c5; }
+
+.pitch-info {
+    position: absolute;
+    left: 50%;
+    bottom: 7.6rem;
+    transform: translateX(-50%);
+    width: calc(100% - 2rem);
+    max-width: 850px;
+    margin: 0;
+    text-align: center;
+    pointer-events: none;
+    z-index: 1;
+    font-size: .76rem;
+    color: var(--game-guide);
+}
+
+.keyboard-key { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; font-family: inherit; }
+.keyboard-key small { font-size: .62rem; line-height: 1.1; }
+.keyboard-key.active { outline: 2px solid #b9cee9; outline-offset: 2px; }
