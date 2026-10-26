@@ -42,9 +42,6 @@ introModal.addEventListener("cancel", function (event) {
     if (!audioReady) { event.preventDefault(); }
 });
 
-    // close our modal
-    introModal.close();
-
 // when dialog closes by whatever means, load audio system
 introModal.addEventListener("close", toneInit);
 
