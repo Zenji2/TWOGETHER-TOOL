@@ -13,6 +13,17 @@
     <script src="main.js" defer></script>
     
 </head>
+<dialog id="result-modal" aria-labelledby="result-title">
+    <h2 id="result-title">Song finished!</h2>
+    <p id="result-song"></p>
+    <p class="result-score"><strong id="result-score">0</strong> / <span id="maximum-score">4200</span></p>
+    <p id="result-notes"></p>
+    <p id="result-message"></p>
+    <div class="result-actions">
+        <button id="play-again-button" type="button">Play again</button>
+        <button id="choose-song-button" type="button">Choose another song</button>
+    </div>
+</dialog>
 <body>
     <dialog id="intro-modal">
         <p>TWOGETHER is a two player instrument tool. One of you plays the sound with the keyboard, and the other shapes how it sounds by moving the mouse.</p>

@@ -6,6 +6,7 @@ const introModal = document.getElementById("intro-modal");
 // console.log(introModal);
 // find modal close button
 const introModalCloseButton = document.getElementById("intro-modal-close");
+const resultModal = document.getElementById("result-modal");
 let audioReady = false;
 // is the mouse button held?
 //let mouseButtonDown = false;
@@ -134,11 +135,17 @@ function releaseAllNotes() {
 
 // only want to b true while key is held down
 function handleKeyDown(e) {
+    if (introModal.open || resultModal.open) { return; }
+    if (e.key === "Escape") {
+        pauseGame();
+        return;
+    }
     const letter = e.key.toUpperCase();
-    if (!audioReady || introModal.open || e.repeat || e.ctrlKey || e.altKey || e.metaKey || heldNotes.has(letter)) { return; }
+    if (!audioReady || e.repeat || e.ctrlKey || e.altKey || e.metaKey || heldNotes.has(letter)) { return; }
     const key = findKeyboardKey(letter);
     if (key === null) { return; }
     e.preventDefault();
+    if (round.phase === "paused") { return; }
     key.classList.add("active");
 
     if (round.phase === "playing") {
@@ -170,7 +177,16 @@ function handleKeyUp(e) {
 }
 
 // stop stuck notes if the window loses focus
-window.addEventListener("blur", releaseAllNotes);
+function handleFocusLost() {
+    releaseAllNotes();
+    pauseGame();
+    pointer.inside = false;
+}
+
+window.addEventListener("blur", handleFocusLost);
+document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { handleFocusLost(); }
+});
 
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
@@ -377,6 +393,7 @@ const scoreValue = document.getElementById("score-value");
 const roundMessage = document.getElementById("round-message");
 const playButton = document.getElementById("play-button");
 const restartButton = document.getElementById("restart-button");
+const pauseButton = document.getElementById("pause-button");
 
 let selectedSong = songs[0];
 let round = new Game.Round(selectedSong);
@@ -399,11 +416,27 @@ function updateScore() {
 }
 
 function updateControls() {
-    const active = round.phase === "playing";
+    const active = round.phase === "playing" || round.phase === "paused";
     playButton.disabled = active;
+    pauseButton.disabled = !active;
+    pauseButton.textContent = round.phase === "paused" ? "Resume" : "Pause";
     restartButton.disabled = round.phase === "ready";
     songSelect.disabled = active;
-    helpButton.disabled = active;
+}
+
+// results dialog at end of song
+function showResults() {
+    document.getElementById("result-song").textContent = round.song.title;
+    document.getElementById("result-score").textContent = round.score;
+    document.getElementById("maximum-score").textContent = round.chart.length * 100;
+    document.getElementById("result-notes").textContent = round.hits + " notes made \u00B7 " + round.misses + " missed";
+    document.getElementById("result-message").textContent = round.misses === 0
+        ? "You played every note of the melody together!"
+        : "Try again to fill in the missing notes, or choose another song.";
+    // let last note finish
+    heldNotes.clear();
+    keyboardKeys.forEach(function (key) { key.classList.remove("active"); });
+    if (!resultModal.open) { resultModal.showModal(); }
 }
 
 // react to what the round says happened (new circle, hit, miss, finished)
@@ -421,6 +454,7 @@ function consumeEvents() {
             setMessage("Missed this one. Keep going.");
         } else if (event.type === "finished") {
             setMessage("Song finished. You made " + round.hits + " of " + round.chart.length + " notes.");
+            showResults();
         }
     }
     updateScore();
@@ -434,9 +468,28 @@ function beginGame() {
     }
     if (document.activeElement) { document.activeElement.blur(); }
     releaseAllNotes();
+    if (resultModal.open) { resultModal.close(); }
     round = new Game.Round(selectedSong);
     round.start(performance.now());
     consumeEvents();
+}
+
+function pauseGame() {
+    if (round.phase === "playing") {
+        round.pause(performance.now());
+        releaseAllNotes();
+        consumeEvents();
+        if (round.phase === "paused") {
+            setMessage("Paused. Press Resume when both of you are ready.");
+        }
+    }
+    updateControls();
+}
+
+function resumeGame() {
+    round.resume(performance.now());
+    setMessage(round.orb !== null ? "Move into the circle, then press " + round.orb.entry.key + "." : "Next note\u2026");
+    updateControls();
 }
 
 // go back to a fresh round for the chosen song
@@ -455,11 +508,29 @@ songSelect.addEventListener("change", function () {
 });
 
 helpButton.addEventListener("click", function () {
-    introModal.showModal();
+    pauseGame();
+    releaseAllNotes();
+    if (!introModal.open) { introModal.showModal(); }
 });
 
 playButton.addEventListener("click", beginGame);
 restartButton.addEventListener("click", beginGame);
+
+pauseButton.addEventListener("click", function () {
+    if (round.phase === "paused") {
+        resumeGame();
+    } else {
+        pauseGame();
+    }
+    pauseButton.blur();
+});
+
+document.getElementById("play-again-button").addEventListener("click", beginGame);
+document.getElementById("choose-song-button").addEventListener("click", function () {
+    resultModal.close();
+    resetRound();
+    songSelect.focus();
+});
 
 // game loop
 function gameLoop() {

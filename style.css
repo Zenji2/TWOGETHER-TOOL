@@ -157,3 +157,13 @@ button:focus-visible, select:focus-visible { outline: 2px solid #b9cee9; outline
     line-height: 1.4;
     color: var(--game-ink);
 }
+
+/* results dialog */
+dialog::backdrop { background: rgba(0, 0, 0, .65); }
+#result-modal { width: min(590px, calc(100% - 2rem)); padding: 1.4rem; }
+#result-modal[open] { color: var(--game-ink); }
+#result-modal h2 { margin: 0 0 .35rem; font-size: 1.2rem; }
+#result-modal p { line-height: 1.6; font-size: .9rem; margin: .45rem 0; text-align: center; }
+#result-modal .result-score { font-size: 1.5rem; }
+.result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: .6rem; }
+.result-actions button { padding: .45rem .9rem; }
