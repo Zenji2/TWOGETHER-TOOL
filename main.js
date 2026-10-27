@@ -124,13 +124,32 @@ function findKeyboardKey(pressedKey) {
     }
     return null;
 }
+
+// stop every sounding note and clear the key highlights
+function releaseAllNotes() {
+    heldNotes.clear();
+    keyboardKeys.forEach(function (key) { key.classList.remove("active"); });
+    synth.releaseAll();
+}
+
 // only want to b true while key is held down
 function handleKeyDown(e) {
     const letter = e.key.toUpperCase();
     if (!audioReady || introModal.open || e.repeat || e.ctrlKey || e.altKey || e.metaKey || heldNotes.has(letter)) { return; }
     const key = findKeyboardKey(letter);
     if (key === null) { return; }
+    e.preventDefault();
+    key.classList.add("active");
 
+    if (round.phase === "playing") {
+        heldNotes.set(letter, null);
+        const madeIt = round.attempt(letter, pointer, gridBounds, performance.now());
+        consumeEvents();
+        if (!madeIt && round.orb !== null) {
+            setMessage("Hover inside the circle and press " + round.orb.entry.key + ". You can try again before it disappears.");
+        }
+        return;
+    }
     const note = getMappedNote(key.dataset.note);
     // two letters can reach the same pitch after the mouse moves
     if (![...heldNotes.values()].includes(note)) { synth.triggerAttack(note); }
@@ -147,15 +166,11 @@ function handleKeyUp(e) {
     const key = findKeyboardKey(letter);
     if (key !== null) { key.classList.remove("active"); }
     // keep the sound going if another held letter still uses this note
-    if (![...heldNotes.values()].includes(note)) { synth.triggerRelease(note); }
+    if (note !== null && ![...heldNotes.values()].includes(note)) { synth.triggerRelease(note); }
 }
 
 // stop stuck notes if the window loses focus
-window.addEventListener("blur", function () {
-    heldNotes.clear();
-    keyboardKeys.forEach(function (key) { key.classList.remove("active"); });
-    synth.releaseAll();
-});
+window.addEventListener("blur", releaseAllNotes);
 
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
@@ -172,16 +187,18 @@ const canvasFont = '"Nunito Sans", sans-serif';
 let gridBounds = { x: 0, y: 0, width: 0, height: 0 };
 
 function updateGridBounds() {
+    const canvasRect = mouseCanvas.getBoundingClientRect();
     const header = document.querySelector("header");
-    const headerBottom = header === null ? 0 : header.getBoundingClientRect().bottom;
+    const headerBottom = header === null ? 0 : header.getBoundingClientRect().bottom - canvasRect.top;
+    const message = document.getElementById("round-message");
+    const messageTop = message === null ? mouseCanvas.height - 150 : message.getBoundingClientRect().top - canvasRect.top;
     const side = Math.max(40, mouseCanvas.width * 0.06);
     const top = Math.max(100, headerBottom + 50);
-    const bottom = 150;
     gridBounds = {
         x: side,
         y: top,
         width: Math.max(150, mouseCanvas.width - side * 2),
-        height: Math.max(100, mouseCanvas.height - top - bottom)
+        height: Math.max(100, messageTop - top - 25)
     };
 }
 
@@ -190,7 +207,7 @@ function resizeCanvas() {
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
     updateGridBounds();
-    drawPitchGrid();
+    drawFrame();
 }
 
 function tileNote(note) {
@@ -251,7 +268,11 @@ function drawPitchGrid() {
             canvasContext.fill();
             canvasContext.restore();
 
-            if (isActive) {
+            // hide orb text so its easier to read
+            const holdsOrb = round.phase === "playing" && round.orb !== null && round.orb.entry.column === column && round.orb.entry.row === row;
+            if (holdsOrb) {
+            // no text here while the orb is on this tile
+            } else if (isActive) {
                 canvasContext.fillStyle = "#08191c";
                 canvasContext.font = "800 " + Math.max(24, Math.min(64, height * 0.3)) + "px " + canvasFont;
                 canvasContext.fillText(note, x + width / 2, y + height / 2 - 8, width - 10);
@@ -293,32 +314,72 @@ function drawPitchGrid() {
     canvasContext.restore();
 }
 
+// where the mouse is
+let pointer = { x: 0, y: 0, inside: false };
+
+// draw the orb
+function drawOrb() {
+    if (round.phase !== "playing" || round.orb === null) { return; }
+    const entry = round.orb.entry;
+    const target = Game.orbGeometry(entry, gridBounds);
+
+    canvasContext.save();
+    canvasContext.shadowColor = "rgba(255, 184, 76, 0.75)";
+    canvasContext.shadowBlur = 26;
+    canvasContext.fillStyle = "hsl(38, 96%, 62%)";
+    canvasContext.beginPath();
+    canvasContext.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+    canvasContext.fill();
+    canvasContext.restore();
+
+    canvasContext.fillStyle = "#2b1a00";
+    canvasContext.textAlign = "center";
+    canvasContext.textBaseline = "middle";
+    canvasContext.font = "800 " + Math.round(target.radius * 1.05) + "px " + canvasFont;
+    canvasContext.fillText(entry.key, target.x, target.y + 1);
+}
+
+function drawFrame() {
+    drawPitchGrid();
+    drawOrb();
+}
+
 // the mouse area picks the pitch
 function handleMouseMove(e) {
     if (mouseCanvas.width === 0 || mouseCanvas.height === 0) { return; }
     const bounds = gridBounds;
-    const column = Math.max(0, Math.min(semitoneShifts.length - 1, Math.floor((e.offsetX - bounds.x) / bounds.width * semitoneShifts.length)));
-    const row = Math.max(0, Math.min(octaveShifts.length - 1, Math.floor((e.offsetY - bounds.y) / bounds.height * octaveShifts.length)));
+    pointer.x = e.offsetX;
+    pointer.y = e.offsetY;
+    pointer.inside = pointer.x >= bounds.x && pointer.x <= bounds.x + bounds.width && pointer.y >= bounds.y && pointer.y <= bounds.y + bounds.height;
+
+    const column = Math.max(0, Math.min(semitoneShifts.length - 1, Math.floor((pointer.x - bounds.x) / bounds.width * semitoneShifts.length)));
+    const row = Math.max(0, Math.min(octaveShifts.length - 1, Math.floor((pointer.y - bounds.y) / bounds.height * octaveShifts.length)));
     if (column === mouseColumn && row === mouseRow) { return; }
     mouseColumn = column;
     mouseRow = row;
     updateKeyboardHints();
-    drawPitchGrid();
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
+mouseCanvas.addEventListener("mouseleave", function () { pointer.inside = false; });
 new ResizeObserver(resizeCanvas).observe(mouseCanvas);
 document.fonts.ready.then(resizeCanvas);
 
 updateKeyboardHints();
-resizeCanvas();
 
 ///////// songs and header
+const Game = window.TWOGETHER_GAME;
 const songSelect = document.getElementById("song-select");
 const songProgress = document.getElementById("song-progress");
 const helpButton = document.getElementById("help-button");
 const songs = window.TWOGETHER_SONGS;
+const scoreValue = document.getElementById("score-value");
+const roundMessage = document.getElementById("round-message");
+const playButton = document.getElementById("play-button");
+const restartButton = document.getElementById("restart-button");
+
 let selectedSong = songs[0];
+let round = new Game.Round(selectedSong);
 
 // fill the song dropdown from songs.js
 for (const song of songs) {
@@ -328,17 +389,88 @@ for (const song of songs) {
     songSelect.append(option);
 }
 
-function updateProgress(notesDone = 0) {
-    songProgress.textContent = notesDone + " / " + selectedSong.melody.length + " notes";
+function setMessage(text) {
+    if (roundMessage.textContent !== text) { roundMessage.textContent = text; }
+}
+
+function updateScore() {
+    scoreValue.textContent = round.score;
+    songProgress.textContent = round.index + " / " + round.chart.length + " notes";
+}
+
+function updateControls() {
+    const active = round.phase === "playing";
+    playButton.disabled = active;
+    restartButton.disabled = round.phase === "ready";
+    songSelect.disabled = active;
+    helpButton.disabled = active;
+}
+
+// react to what the round says happened (new circle, hit, miss, finished)
+function consumeEvents() {
+    const events = round.takeEvents();
+    if (events.length === 0) { return; }
+    for (const event of events) {
+        if (event.type === "spawn") {
+            setMessage("Move into the circle, then press " + event.entry.key + ".");
+        } else if (event.type === "hit") {
+            // the pitch comes from the key AND the mouse area, so the note can be wrong-sounding if they don't match
+            synth.triggerAttackRelease(Game.midiToNote(event.playedMidi), Math.max(0.12, event.entry.duration * 0.9));
+            setMessage("Made it! +100. Next note\u2026");
+        } else if (event.type === "miss") {
+            setMessage("Missed this one. Keep going.");
+        } else if (event.type === "finished") {
+            setMessage("Song finished. You made " + round.hits + " of " + round.chart.length + " notes.");
+        }
+    }
+    updateScore();
+    updateControls();
+}
+
+function beginGame() {
+    if (!audioReady) {
+        introModal.showModal();
+        return;
+    }
+    if (document.activeElement) { document.activeElement.blur(); }
+    releaseAllNotes();
+    round = new Game.Round(selectedSong);
+    round.start(performance.now());
+    consumeEvents();
+}
+
+// go back to a fresh round for the chosen song
+function resetRound() {
+    releaseAllNotes();
+    round = new Game.Round(selectedSong);
+    setMessage("Choose a song and press Play. You can try the notes first.");
+    updateScore();
+    updateControls();
 }
 
 songSelect.addEventListener("change", function () {
     selectedSong = songs.find(function (song) { return song.id === songSelect.value; });
-    updateProgress();
+    resetRound();
+    songSelect.blur();
 });
 
 helpButton.addEventListener("click", function () {
     introModal.showModal();
 });
 
-updateProgress();
+playButton.addEventListener("click", beginGame);
+restartButton.addEventListener("click", beginGame);
+
+// game loop
+function gameLoop() {
+    if (round.phase === "playing") {
+        round.advance(performance.now());
+        consumeEvents();
+    }
+    drawFrame();
+    requestAnimationFrame(gameLoop);
+}
+
+updateScore();
+updateControls();
+requestAnimationFrame(gameLoop);

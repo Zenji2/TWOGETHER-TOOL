@@ -9,6 +9,7 @@
 
     <script src="vendor/Tone-14.8.49.js"></script>
     <script src="songs.js" defer></script>
+    <script src="game.js" defer></script>
     <script src="main.js" defer></script>
     
 </head>
@@ -37,6 +38,7 @@
 
     <main id="game">
     <!--     keyboard player -->
+         <p id="round-message" class="round-message" role="status">Choose a song and press Play! You may choose to listen to a song first before playing.</p>
          <p id="pitch-info" class="pitch-info">X: original pitch · Y: original octave</p>
             <section id="keyboard-player" class="key-row" aria-label="Keyboard player">
                 <button class="keyboard-key" type="button" data-key="A" data-note="C4" aria-label="A, C4"><span>A</span><small>C4</small></button>
