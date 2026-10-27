@@ -121,6 +121,22 @@ header h1 {
     color: var(--game-guide);
 }
 
+/* keyboard letters */
 .keyboard-key { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; font-family: inherit; }
 .keyboard-key small { font-size: .62rem; line-height: 1.1; }
 .keyboard-key.active { outline: 2px solid #b9cee9; outline-offset: 2px; }
+
+/* header, score and song controls */
+header { right: 1rem; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.title-and-score { flex-shrink: 0; }
+#score-text { font-size: .9rem; margin: .3rem 0 0; color: var(--game-ink); }
+.game-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .45rem; max-width: 75%; font-size: .85rem; }
+.game-controls label, #song-progress { color: var(--game-ink); }
+.game-controls button { white-space: nowrap; flex: 0 0 auto; }
+button, select { font-family: inherit; }
+select { color: var(--colour-01); background: var(--colour-03); border: 1px solid var(--colour-02); border-radius: 6px; padding: 4px; font-size: .85rem; max-width: 190px; }
+button:not(:disabled), select { cursor: pointer; }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, select:focus-visible { outline: 2px solid #b9cee9; outline-offset: 3px; }
+#song-progress { display: block; flex-basis: 100%; text-align: right; font-size: .75rem; }
+#score-value { font-variant-numeric: tabular-nums; }

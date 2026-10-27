@@ -169,11 +169,15 @@ mouseCanvas.style.cursor = "crosshair";
 
 const canvasFont = '"Nunito Sans", sans-serif';
 
-function getGridBounds() {
+let gridBounds = { x: 0, y: 0, width: 0, height: 0 };
+
+function updateGridBounds() {
+    const header = document.querySelector("header");
+    const headerBottom = header === null ? 0 : header.getBoundingClientRect().bottom;
     const side = Math.max(40, mouseCanvas.width * 0.06);
-    const top = 100;
+    const top = Math.max(100, headerBottom + 50);
     const bottom = 150;
-    return {
+    gridBounds = {
         x: side,
         y: top,
         width: Math.max(150, mouseCanvas.width - side * 2),
@@ -182,8 +186,10 @@ function getGridBounds() {
 }
 
 function resizeCanvas() {
+    if (mouseCanvas.clientWidth === 0 || mouseCanvas.clientHeight === 0) { return; }
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
+    updateGridBounds();
     drawPitchGrid();
 }
 
@@ -210,7 +216,7 @@ function signedNumber(value) {
 
 // canvas highlights
 function drawPitchGrid() {
-    const bounds = getGridBounds();
+    const bounds = gridBounds;
     const cellWidth = bounds.width / semitoneShifts.length;
     const cellHeight = bounds.height / octaveShifts.length;
     const gap = 6;
@@ -267,8 +273,8 @@ function drawPitchGrid() {
     }
     canvasContext.fillStyle = "rgba(190, 240, 232, 0.45)";
     canvasContext.font = "600 12px " + canvasFont;
-    canvasContext.textAlign = "left";
-    canvasContext.fillText("semitones", bounds.x, bounds.y - 36);
+    canvasContext.textAlign = "center";
+    canvasContext.fillText("semitones", bounds.x + bounds.width / 2, bounds.y - 36);
 
     // scale down the left: octaves
     canvasContext.textAlign = "right";
@@ -290,7 +296,7 @@ function drawPitchGrid() {
 // the mouse area picks the pitch
 function handleMouseMove(e) {
     if (mouseCanvas.width === 0 || mouseCanvas.height === 0) { return; }
-    const bounds = getGridBounds();
+    const bounds = gridBounds;
     const column = Math.max(0, Math.min(semitoneShifts.length - 1, Math.floor((e.offsetX - bounds.x) / bounds.width * semitoneShifts.length)));
     const row = Math.max(0, Math.min(octaveShifts.length - 1, Math.floor((e.offsetY - bounds.y) / bounds.height * octaveShifts.length)));
     if (column === mouseColumn && row === mouseRow) { return; }
@@ -301,7 +307,38 @@ function handleMouseMove(e) {
 }
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
-window.addEventListener("resize", resizeCanvas);
+new ResizeObserver(resizeCanvas).observe(mouseCanvas);
+document.fonts.ready.then(resizeCanvas);
 
 updateKeyboardHints();
 resizeCanvas();
+
+///////// songs and header
+const songSelect = document.getElementById("song-select");
+const songProgress = document.getElementById("song-progress");
+const helpButton = document.getElementById("help-button");
+const songs = window.TWOGETHER_SONGS;
+let selectedSong = songs[0];
+
+// fill the song dropdown from songs.js
+for (const song of songs) {
+    const option = document.createElement("option");
+    option.value = song.id;
+    option.textContent = song.title;
+    songSelect.append(option);
+}
+
+function updateProgress(notesDone = 0) {
+    songProgress.textContent = notesDone + " / " + selectedSong.melody.length + " notes";
+}
+
+songSelect.addEventListener("change", function () {
+    selectedSong = songs.find(function (song) { return song.id === songSelect.value; });
+    updateProgress();
+});
+
+helpButton.addEventListener("click", function () {
+    introModal.showModal();
+});
+
+updateProgress();

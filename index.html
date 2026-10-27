@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
 
     <script src="vendor/Tone-14.8.49.js"></script>
+    <script src="songs.js" defer></script>
     <script src="main.js" defer></script>
     
 </head>
@@ -18,7 +19,20 @@
     </dialog>
 
     <header>
-        <h1>TWOGETHER</h1>
+        <div class="title-and-score"></div>
+            <h1>TWOGETHER</h1>
+            <p id="score-text">Score: <strong id="score-value">0</strong></p>
+        </div>
+        <div class="game-controls" aria-label="Song controls"></div>
+            <label for="song-select">Song:</label>
+            <select id="song-select"></select>
+            <button id="listen-button" type="button">Listen</button>
+            <button id="play-button" type="button">Play</button>
+            <button id="pause-button" type="button" disabled>Pause</button>
+            <button id="restart-button" type="button" disabled>Restart</button>
+            <button id="help-button" type="button">How to play</button>
+            <span id="song-progress" aria-live="off">0 / 42 notes</span>
+        </div>
     </header>
 
     <main id="game">
