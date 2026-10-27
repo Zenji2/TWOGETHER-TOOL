@@ -137,6 +137,7 @@ function releaseAllNotes() {
 function handleKeyDown(e) {
     if (introModal.open || resultModal.open) { return; }
     if (e.key === "Escape") {
+        stopPreview();
         pauseGame();
         return;
     }
@@ -145,7 +146,7 @@ function handleKeyDown(e) {
     const key = findKeyboardKey(letter);
     if (key === null) { return; }
     e.preventDefault();
-    if (round.phase === "paused") { return; }
+    if (round.phase === "paused" || preview !== null) { return; }
     key.classList.add("active");
 
     if (round.phase === "playing") {
@@ -179,6 +180,7 @@ function handleKeyUp(e) {
 // stop stuck notes if the window loses focus
 function handleFocusLost() {
     releaseAllNotes();
+    stopPreview();
     pauseGame();
     pointer.inside = false;
 }
@@ -394,9 +396,12 @@ const roundMessage = document.getElementById("round-message");
 const playButton = document.getElementById("play-button");
 const restartButton = document.getElementById("restart-button");
 const pauseButton = document.getElementById("pause-button");
+const listenButton = document.getElementById("listen-button");
 
 let selectedSong = songs[0];
 let round = new Game.Round(selectedSong);
+let preview = null;
+let previewVersion = 0;
 
 // fill the song dropdown from songs.js
 for (const song of songs) {
@@ -420,7 +425,9 @@ function updateControls() {
     playButton.disabled = active;
     pauseButton.disabled = !active;
     pauseButton.textContent = round.phase === "paused" ? "Resume" : "Pause";
-    restartButton.disabled = round.phase === "ready";
+    restartButton.disabled = round.phase === "ready" || preview !== null;
+    listenButton.disabled = active;
+    listenButton.textContent = preview !== null ? "Stop listening" : "Listen";
     songSelect.disabled = active;
 }
 
@@ -467,6 +474,7 @@ function beginGame() {
         return;
     }
     if (document.activeElement) { document.activeElement.blur(); }
+    stopPreview();
     releaseAllNotes();
     if (resultModal.open) { resultModal.close(); }
     round = new Game.Round(selectedSong);
@@ -492,6 +500,69 @@ function resumeGame() {
     updateControls();
 }
 
+// stop the melody preview
+function stopPreview() {
+    previewVersion++;
+    if (preview === null) { return; }
+    preview.part.dispose();
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    preview = null;
+    releaseAllNotes();
+    setMessage("Listening stopped. Press Play when you're ready.");
+    updateControls();
+}
+
+// listen to the song once
+function listenToSong() {
+    if (preview !== null) {
+        stopPreview();
+        setMessage("Choose a song and press Play. You can try the notes first.");
+        return;
+    }
+    if (!audioReady) {
+        introModal.showModal();
+        return;
+    }
+    releaseAllNotes();
+    const song = selectedSong;
+    const version = ++previewVersion;
+    let seconds = 0;
+    const notes = song.melody.map(function (item) {
+        const entry = { time: seconds, note: item[0], duration: item[1] * 60 / song.bpm };
+        seconds += entry.duration;
+        return entry;
+    });
+
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    Tone.Transport.position = 0;
+    preview = { song: song, part: null };
+    preview.part = new Tone.Part(function (time, event) {
+        synth.triggerAttackRelease(event.note, event.duration * 0.9, time);
+        // show note on screen
+        Tone.Draw.schedule(function () {
+            if (preview !== null && version === previewVersion) {
+                setMessage("Listening to " + song.title + " \u00B7 " + prettyNote(event.note));
+            }
+        }, time);
+    }, notes).start(0);
+
+    // stops when song is over
+    Tone.Transport.scheduleOnce(function (time) {
+        Tone.Draw.schedule(function () {
+            if (preview !== null && version === previewVersion) {
+                stopPreview();
+                setMessage("Your turn. Press Play to make the melody together.");
+            }
+        }, time);
+    }, seconds + 0.4);
+
+    Tone.Transport.start("+0.08");
+    setMessage("Listening to " + song.title + ".");
+    updateControls();
+}
+
 // go back to a fresh round for the chosen song
 function resetRound() {
     releaseAllNotes();
@@ -514,6 +585,7 @@ helpButton.addEventListener("click", function () {
 });
 
 playButton.addEventListener("click", beginGame);
+listenButton.addEventListener("click", listenToSong);
 restartButton.addEventListener("click", beginGame);
 
 pauseButton.addEventListener("click", function () {
