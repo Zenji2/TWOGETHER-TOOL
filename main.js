@@ -335,31 +335,119 @@ function drawPitchGrid() {
 // where the mouse is
 let pointer = { x: 0, y: 0, inside: false };
 
+// effects
+let trail = [];   // recent mouse positions
+let flash = null; // the "+100" or "Missed" popup
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+reducedMotion.addEventListener("change", function () { trail = []; });
+
+// mouse trail
+function drawTrail(now) {
+    trail = trail.filter(function (point) { return now - point.time < 550; });
+    for (const point of trail) {
+        const life = 1 - (now - point.time) / 550;
+        canvasContext.fillStyle = "rgba(255, 214, 140, " + life * 0.5 + ")";
+        canvasContext.beginPath();
+        canvasContext.arc(point.x, point.y, 1 + life * 4, 0, Math.PI * 2);
+        canvasContext.fill();
+    }
+}
+
 // draw the orb
-function drawOrb() {
+function drawOrb(now) {
     if (round.phase !== "playing" || round.orb === null) { return; }
     const entry = round.orb.entry;
     const target = Game.orbGeometry(entry, gridBounds);
+    const timeLeft = round.remaining(now) / 3000;
+    const hovered = pointer.inside && Math.hypot(pointer.x - target.x, pointer.y - target.y) <= target.radius;
 
+    // countdown ring
+    canvasContext.strokeStyle = "rgba(255, 190, 90, 0.6)";
+    canvasContext.lineWidth = 2;
+    canvasContext.beginPath();
+    if (reducedMotion.matches) {
+        canvasContext.arc(target.x, target.y, target.radius + 9, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * timeLeft);
+    } else {
+        canvasContext.arc(target.x, target.y, target.radius + 5 + timeLeft * 18, 0, Math.PI * 2);
+    }
+    canvasContext.stroke();
+
+    // orb highlights when mouse hovers over
     canvasContext.save();
-    canvasContext.shadowColor = "rgba(255, 184, 76, 0.75)";
-    canvasContext.shadowBlur = 26;
-    canvasContext.fillStyle = "hsl(38, 96%, 62%)";
+    canvasContext.shadowColor = "rgba(255, 184, 76, " + (hovered ? 0.95 : 0.6) + ")";
+    canvasContext.shadowBlur = hovered ? 38 : 22;
+    canvasContext.fillStyle = hovered ? "hsl(40, 100%, 72%)" : "hsl(38, 96%, 58%)";
     canvasContext.beginPath();
     canvasContext.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
     canvasContext.fill();
+    if (hovered) {
+        canvasContext.lineWidth = 3;
+        canvasContext.strokeStyle = "#fff6e0";
+        canvasContext.stroke();
+    }
     canvasContext.restore();
 
-    canvasContext.fillStyle = "#2b1a00";
+    // key letter, note name and seconds left
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
-    canvasContext.font = "800 " + Math.round(target.radius * 1.05) + "px " + canvasFont;
-    canvasContext.fillText(entry.key, target.x, target.y + 1);
+    canvasContext.fillStyle = "#2b1a00";
+    canvasContext.font = "800 " + Math.round(target.radius * 0.95) + "px " + canvasFont;
+    canvasContext.fillText(entry.key, target.x, target.y - target.radius * 0.1);
+    canvasContext.font = "700 " + Math.max(9, Math.round(target.radius * 0.34)) + "px " + canvasFont;
+    canvasContext.fillText(tileNote(entry.note), target.x, target.y + target.radius * 0.55);
+    canvasContext.fillStyle = "rgba(255, 224, 170, 0.9)";
+    canvasContext.font = "700 12px " + canvasFont;
+    canvasContext.fillText((round.remaining(now) / 1000).toFixed(1) + "s", target.x, target.y - target.radius - 28);
 }
 
+// fade +100 and missed
+function drawFlash(now) {
+    if (flash === null) { return; }
+    const age = now - flash.startedAt;
+    if (age > 650) {
+        flash = null;
+        return;
+    }
+    const fade = 1 - age / 650;
+    const lift = reducedMotion.matches ? 0 : (1 - fade) * 22;
+    canvasContext.save();
+    canvasContext.globalAlpha = fade;
+    canvasContext.shadowColor = "rgba(0, 0, 0, 0.45)";
+    canvasContext.shadowBlur = 6;
+    canvasContext.fillStyle = flash.good ? "#eafffb" : "hsl(8, 90%, 74%)";
+    canvasContext.font = "800 22px " + canvasFont;
+    canvasContext.textAlign = "center";
+    canvasContext.textBaseline = "middle";
+    canvasContext.fillText(flash.text, flash.x, flash.y - flash.radius - 8 - lift);
+    canvasContext.restore();
+}
+
+// dim the grid while the song is paused
+function drawPausedOverlay() {
+    if (round.phase !== "paused") { return; }
+    const bounds = gridBounds;
+    canvasContext.fillStyle = "rgba(8, 25, 28, 0.78)";
+    canvasContext.beginPath();
+    canvasContext.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, 14);
+    canvasContext.fill();
+    canvasContext.textAlign = "center";
+    canvasContext.textBaseline = "middle";
+    canvasContext.fillStyle = "#d9e5f2";
+    canvasContext.font = "800 34px " + canvasFont;
+    canvasContext.fillText("Paused", bounds.x + bounds.width / 2, bounds.y + bounds.height / 2 - 12);
+    canvasContext.fillStyle = "rgba(190, 240, 232, 0.65)";
+    canvasContext.font = "600 15px " + canvasFont;
+    canvasContext.fillText("Press Resume when both of you are ready.", bounds.x + bounds.width / 2, bounds.y + bounds.height / 2 + 22);
+}
+
+
 function drawFrame() {
+    const now = performance.now();
     drawPitchGrid();
-    drawOrb();
+    drawTrail(now);
+    drawOrb(now);
+    drawFlash(now);
+    drawPausedOverlay();
 }
 
 // the mouse area picks the pitch
@@ -369,6 +457,11 @@ function handleMouseMove(e) {
     pointer.x = e.offsetX;
     pointer.y = e.offsetY;
     pointer.inside = pointer.x >= bounds.x && pointer.x <= bounds.x + bounds.width && pointer.y >= bounds.y && pointer.y <= bounds.y + bounds.height;
+
+    if (pointer.inside && !reducedMotion.matches) {
+        trail.push({ x: pointer.x, y: pointer.y, time: performance.now() });
+        if (trail.length > 30) { trail.shift(); }
+    }
 
     const column = Math.max(0, Math.min(semitoneShifts.length - 1, Math.floor((pointer.x - bounds.x) / bounds.width * semitoneShifts.length)));
     const row = Math.max(0, Math.min(octaveShifts.length - 1, Math.floor((pointer.y - bounds.y) / bounds.height * octaveShifts.length)));
@@ -446,6 +539,16 @@ function showResults() {
     if (!resultModal.open) { resultModal.showModal(); }
 }
 
+// pop score number
+let scorePopTimer = null;
+function popScore() {
+    clearTimeout(scorePopTimer);
+    scoreValue.classList.remove("scored");
+    void scoreValue.offsetWidth; // lets the animation start again
+    scoreValue.classList.add("scored");
+    scorePopTimer = setTimeout(function () { scoreValue.classList.remove("scored"); }, 600);
+}
+
 // react to what the round says happened (new circle, hit, miss, finished)
 function consumeEvents() {
     const events = round.takeEvents();
@@ -454,10 +557,13 @@ function consumeEvents() {
         if (event.type === "spawn") {
             setMessage("Move into the circle, then press " + event.entry.key + ".");
         } else if (event.type === "hit") {
-            // the pitch comes from the key AND the mouse area, so the note can be wrong-sounding if they don't match
             synth.triggerAttackRelease(Game.midiToNote(event.playedMidi), Math.max(0.12, event.entry.duration * 0.9));
+            flash = { x: event.target.x, y: event.target.y, radius: event.target.radius, text: "+100", good: true, startedAt: performance.now() };
+            popScore();
             setMessage("Made it! +100. Next note\u2026");
         } else if (event.type === "miss") {
+            const spot = Game.orbGeometry(event.entry, gridBounds);
+            flash = { x: spot.x, y: spot.y, radius: spot.radius, text: "Missed", good: false, startedAt: performance.now() };
             setMessage("Missed this one. Keep going.");
         } else if (event.type === "finished") {
             setMessage("Song finished. You made " + round.hits + " of " + round.chart.length + " notes.");
@@ -477,6 +583,7 @@ function beginGame() {
     stopPreview();
     releaseAllNotes();
     if (resultModal.open) { resultModal.close(); }
+    flash = null;
     round = new Game.Round(selectedSong);
     round.start(performance.now());
     consumeEvents();
@@ -543,7 +650,7 @@ function listenToSong() {
         // show note on screen
         Tone.Draw.schedule(function () {
             if (preview !== null && version === previewVersion) {
-                setMessage("Listening to " + song.title + " \u00B7 " + prettyNote(event.note));
+                setMessage("Listening to " + song.title + " \u00B7 " + tileNote(event.note));
             }
         }, time);
     }, notes).start(0);
@@ -566,6 +673,7 @@ function listenToSong() {
 // go back to a fresh round for the chosen song
 function resetRound() {
     releaseAllNotes();
+    flash = null;
     round = new Game.Round(selectedSong);
     setMessage("Choose a song and press Play. You can try the notes first.");
     updateScore();
