@@ -20,18 +20,26 @@
 /*dark mode*/
 @media (prefers-color-scheme: dark) {
     :root {
-            --colour-01: #264a66;
-            --colour-02: #78e2d3;
-            --colour-03: #bef0e8;
-            --colour-04: #6c90b1;
-            --colour-05: #3c5c65;
+            --colour-01: #1e2631;
+            --colour-02: #ff9b71;
+            --colour-03: #2d3b4a;
+            --colour-04: #d1d9e0;
+            --colour-05: #4a6378;
+            --game-ink: #d1d9e0;
+            --game-guide: #8c9bad;
         }
 }
 
 body {
     font-family: "Nunito Sans", sans-serif;
-    background-color: var(--colour-01);
-    color: var(--colour-04);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(27, 27, 27, 0.85)), url("background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: #0b0f14;
+    color: #eafffb;
+    overflow: hidden;
 }
 
 dialog[open] {
@@ -95,14 +103,26 @@ header h1 {
     font-size: 1.2rem;
 }
 
+
 #mouse-canvas {
     display: block;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at center, #163236, #08191c 75%);
-    border: 1px solid rgba(110, 231, 213, 0.2);
-    border-radius: 12px;
+    background: transparent;
+    border: none;
     cursor: none;
+}
+
+#mouse-canvas:focus,
+#mouse-canvas:focus-visible {
+    outline: none !important;
+}
+
+#game:focus,
+#game:focus-visible,
+body:focus,
+body:focus-visible {
+    outline: none !important;
 }
 
 .keyboard-key.active {
@@ -127,9 +147,33 @@ header h1 {
 }
 
 /* keyboard letters */
-.keyboard-key { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; font-family: inherit; }
+.keyboard-key { display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    gap: .2rem;
+    background: rgba(20, 30, 40, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 0 15px rgba(110, 231, 213, 0.2);
+    color: #eafffb;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+}
+
 .keyboard-key small { font-size: .62rem; line-height: 1.1; }
-.keyboard-key.active { outline: 2px solid #b9cee9; outline-offset: 2px; }
+.keyboard-key.active { background: rgba(255, 155, 113, 0.3); border-color: rgba(255, 155, 113, 0.8); box-shadow: 0 0 25px rgba(255, 155, 113, 0.6); outline: none;}
+
+select, button {
+    background: rgba(20, 30, 40, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #eafffb;
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+    padding: 6px 12px;
+}
 
 /* header, score and song controls */
 header { right: 1rem; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
@@ -139,12 +183,14 @@ header { right: 1rem; z-index: 2; display: flex; justify-content: space-between;
 .game-controls label, #song-progress { color: var(--game-ink); }
 .game-controls button { white-space: nowrap; flex: 0 0 auto; }
 button, select { font-family: inherit; }
-select { color: var(--colour-01); background: var(--colour-03); border: 1px solid var(--colour-02); border-radius: 6px; padding: 4px; font-size: .85rem; max-width: 190px; }
 button:not(:disabled), select { cursor: pointer; }
 button:disabled { opacity: .55; cursor: default; }
 button:focus-visible, select:focus-visible { outline: 2px solid #b9cee9; outline-offset: 3px; }
 #song-progress { display: block; flex-basis: 100%; text-align: right; font-size: .75rem; }
 #score-value { font-variant-numeric: tabular-nums; }
+button {
+    white-space: nowrap;
+}
 
 /* round message */
 .round-message {
@@ -217,4 +263,32 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); }
 @media (max-height: 559px) {
     body { overflow-y: auto; }
     #game { min-height: 560px; }
+}
+
+/* Gives a frosted-glass blur over the background to make text readable */
+header {
+    background: rgba(14, 21, 30, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Enhances button contrast */
+select, button {
+    background: rgba(14, 21, 30, 0.65) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+button:hover:not(:disabled), select:hover {
+    background: rgba(255, 155, 113, 0.25) !important;
+    border-color: rgba(255, 155, 113, 0.6) !important;
+}
+
+/* Ensure the canvas doesn't obscure the background */
+#mouse-canvas {
+    background: transparent !important;
 }

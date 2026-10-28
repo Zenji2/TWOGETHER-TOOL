@@ -273,21 +273,22 @@ function tileNote(note) {
     return note.replace("#", "\u266F");
 }
 
-// "up 1 semitone, octave down" in plain words
-function describeShift(column, row) {
-    const semitones = semitoneShifts[column];
-    const parts = [];
-    if (semitones !== 0) {
-        parts.push((semitones > 0 ? "up " : "down ") + Math.abs(semitones) + (Math.abs(semitones) === 1 ? " semitone" : " semitones"));
-    }
-    if (octaveShifts[row] !== 0) {
-        parts.push(octaveShifts[row] > 0 ? "octave up" : "octave down");
-    }
-    return parts.length === 0 ? "original pitch" : parts.join(", ");
-}
-
 function signedNumber(value) {
     return value > 0 ? "+" + value : value < 0 ? "\u2212" + Math.abs(value) : "0";
+}
+
+// show the change in semitone/octave
+function describeShift(column, row) {
+    const semitones = semitoneShifts[column];
+    const octaves = octaveShifts[row] / 12;
+    const parts = [];
+    if (semitones !== 0) {
+        parts.push(signedNumber(semitones) + (Math.abs(semitones) === 1 ? " semitone" : " semitones"));
+    }
+    if (octaves !== 0) {
+        parts.push(signedNumber(octaves) + " octave");
+    }
+    return parts.length === 0 ? "original pitch" : parts.join(", ");
 }
 
 // canvas highlights
@@ -306,41 +307,50 @@ function drawPitchGrid() {
     // tiles
     for (let row = 0; row < octaveShifts.length; row++) {
         for (let column = 0; column < semitoneShifts.length; column++) {
-            const x = bounds.x + column * cellWidth + gap / 2;
-            const y = bounds.y + row * cellHeight + gap / 2;
-            const width = cellWidth - gap;
-            const height = cellHeight - gap;
+            const x = bounds.x + column * cellWidth;
+            const y = bounds.y + row * cellHeight;
+            const centerX = x + cellWidth / 2;
+            const centerY = y + cellHeight / 2;
+            const radius = Math.min(cellWidth, cellHeight) * 0.35;
+            
             const isActive = column === mouseColumn && row === mouseRow;
-            const pitch = (semitoneShifts[column] + octaveShifts[row] - lowest) / (highest - lowest);
             const note = tileNote(getMappedNote("C4", column, row));
+
+            // colour gradient
+            const isLeft = column < semitoneShifts.length / 2;
+            const baseColor = isLeft ? "110, 231, 213" : "255, 155, 113";
 
             canvasContext.save();
             canvasContext.beginPath();
-            canvasContext.roundRect(x, y, width, height, 14);
+            canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            canvasContext.lineWidth = isActive ? 4 : 2;
+            
             if (isActive) {
-                canvasContext.shadowColor = "rgba(110, 231, 213, 0.55)";
-                canvasContext.shadowBlur = 28;
-                canvasContext.fillStyle = "hsl(172, 65%, 68%)";
+                canvasContext.strokeStyle = `rgb(${baseColor})`;
+                canvasContext.shadowColor = `rgba(${baseColor}, 0.8)`;
+                canvasContext.shadowBlur = 25;
+                canvasContext.fillStyle = `rgba(${baseColor}, 0.15)`;
+                canvasContext.fill();
             } else {
-                canvasContext.fillStyle = "hsl(180, 40%, " + (11 + pitch * 20) + "%)";
+                canvasContext.strokeStyle = `rgba(${baseColor}, 0.3)`;
+                canvasContext.shadowColor = `rgba(${baseColor}, 0.2)`;
+                canvasContext.shadowBlur = 10;
             }
-            canvasContext.fill();
+            canvasContext.stroke();
             canvasContext.restore();
 
-            // hide orb text so its easier to read
             const holdsOrb = round.phase === "playing" && round.orb !== null && round.orb.entry.column === column && round.orb.entry.row === row;
-            if (holdsOrb) {
-            // no text here while the orb is on this tile
-            } else if (isActive) {
-                canvasContext.fillStyle = "#08191c";
-                canvasContext.font = "800 " + Math.max(24, Math.min(64, height * 0.3)) + "px " + canvasFont;
-                canvasContext.fillText(note, x + width / 2, y + height / 2 - 8, width - 10);
-                canvasContext.font = "600 " + Math.max(11, Math.min(15, width / 14)) + "px " + canvasFont;
-                canvasContext.fillText(describeShift(column, row), x + width / 2, y + height / 2 + Math.min(34, height * 0.2), width - 10);
-            } else {
-                canvasContext.fillStyle = "rgba(190, 240, 232, 0.4)";
-                canvasContext.font = "700 " + Math.max(12, Math.min(22, height * 0.14)) + "px " + canvasFont;
-                canvasContext.fillText(note, x + width / 2, y + height / 2, width - 10);
+            if (!holdsOrb) {
+                canvasContext.fillStyle = isActive ? "#ffffff" : `rgba(${baseColor}, 0.6)`;
+                canvasContext.font = (isActive ? "800 " : "600 ") + Math.max(16, Math.min(32, radius * 0.5)) + "px " + canvasFont;
+                canvasContext.shadowColor = isActive ? `rgba(${baseColor}, 0.8)` : "transparent";
+                canvasContext.shadowBlur = isActive ? 10 : 0;
+                canvasContext.fillText(note, centerX, centerY - (isActive ? 4 : 0));
+                
+                if (isActive) {
+                    canvasContext.font = "600 " + Math.max(9, Math.min(13, radius * 0.22)) + "px " + canvasFont;
+                    canvasContext.fillText(describeShift(column, row), centerX, centerY + radius * 0.35, radius * 1.6);
+                }
             }
         }
     }
