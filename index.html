@@ -24,10 +24,16 @@
         <button id="choose-song-button" type="button">Choose another song</button>
     </div>
 </dialog>
+<noscript><p class="no-script">Please enable JavaScript to play TWOGETHER.</p></noscript>
 <body>
-    <dialog id="intro-modal">
-        <p>TWOGETHER is a two player instrument tool. One of you plays the sound with the keyboard, and the other shapes how it sounds by moving the mouse.</p>
-        <button id="intro-modal-close">let's go!</button>
+    <dialog id="intro-modal" aria-labelledby="intro-title">
+        <h2 id="intro-title">TWOGETHER</h2>
+        <p>TWOGETHER is a two-player instrument tool and game. One of you plays the sound with the keyboard, and the other chooses the pitch by moving the mouse. For the game, the mouse player moves the mouse into each circle, and the keyboard player presses the correct letter inside of it. </p>
+        <p>Each circle has a timer of 3 seconds, however, there are no timing bonuses and you can press at any point inside that 3 second window. Every circle you hit correctly adds 100 points to your score.</p>
+        <p>Move the mouse left/right to change the semitone, and up/down to change the octave. For example, the A key on the keyboard plays C4, however, you can make it play C3 if you move it down.</p>
+        <p>Choose a song and press Play when you want to start. The notes will play when you succeed and won't when you miss. You may press the Listen button to hear the song play by itself as a reference or just know what the song is before playing.</p>
+        <p id="sound-error" role="alert" hidden></p>
+        <button id="intro-modal-close" type="button">Let's Play!</button>
     </dialog>
 
     <header>
@@ -65,7 +71,7 @@
         </section>
 
     <!--     mouse player -->
-            <canvas id="mouse-canvas" aria label="Mouse player"></canvas>
+            <canvas id="mouse-canvas" tabindex="0" aria label="Song playing area. Move into the circle and press its keyboard letter. Horizontal position shifts pitch; vertical position changes octave." aria-describedby="round-message">The game needs a browser that supports the canvas element.</canvas>
     </main>
 </body>
 </html>

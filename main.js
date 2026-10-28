@@ -7,6 +7,14 @@ const introModal = document.getElementById("intro-modal");
 // find modal close button
 const introModalCloseButton = document.getElementById("intro-modal-close");
 const resultModal = document.getElementById("result-modal");
+const soundError = document.getElementById("sound-error");
+// debugging sound errors
+if (typeof Tone === "undefined") {
+    soundError.textContent = "Keep the vendor folder beside index.html and reload to enable the sound.";
+    soundError.hidden = false;
+    introModal.showModal();
+    throw new Error("Tone.js is missing. Keep the vendor folder beside index.html.");
+}
 let audioReady = false;
 // is the mouse button held?
 //let mouseButtonDown = false;
@@ -27,12 +35,15 @@ introModal.showModal();
 // audio starts from click
 introModalCloseButton.addEventListener("click", async function closeIntroModal() {
     introModalCloseButton.disabled = true;
+    soundError.hidden = true;
     try {
         await toneInit();
         introModal.close();
+        mouseCanvas.focus({ preventScroll: true });
     } catch (error) {
         console.error("Audio could not start:", error);
-        introModalCloseButton.textContent = "try starting audio again";
+        soundError.textContent = "Sound could not start. Check your browser's sound permissions and output device, then try again.";
+        soundError.hidden = false;
     } finally {
         introModalCloseButton.disabled = false;
     }
@@ -70,15 +81,29 @@ const output = new Tone.Gain(0.65);
 
 const limiter = new Tone.Limiter(-6);
 
+let audioPromise = null;
+
 async function toneInit() {
-    await Tone.start();
-    if (audioReady) { return; }
-
-    synth.chain(filter, reverb, output, limiter);
-    limiter.toDestination();
-    Tone.getContext().lookAhead = 0.025;
-
-    audioReady = true;
+    const resume = Tone.start();
+    if (audioReady) { await resume; return; }
+    if (audioPromise !== null) { return audioPromise; }
+    audioPromise = (async function () {
+        let timer;
+        try {
+            // give up after 8 seconds if the browser never turns the sound on
+            await Promise.race([resume, new Promise(function (resolve, reject) {
+                timer = setTimeout(function () { reject(new Error("audio-output-unavailable")); }, 8000);
+            })]);
+            synth.chain(filter, reverb, output, limiter);
+            limiter.toDestination();
+            Tone.getContext().lookAhead = 0.025;
+            audioReady = true;
+        } finally {
+            clearTimeout(timer);
+            audioPromise = null;
+        }
+    })();
+    return audioPromise;
 }
 
 // Keyboard player
@@ -190,6 +215,14 @@ document.addEventListener("visibilitychange", function () {
     if (document.hidden) { handleFocusLost(); }
 });
 
+// the letter keys can also be clicked to test a note
+keyboardKeys.forEach(function (key) {
+    key.addEventListener("click", function () {
+        if (audioReady && preview === null && round.phase !== "playing" && round.phase !== "paused" && !resultModal.open) {
+            synth.triggerAttackRelease(getMappedNote(key.dataset.note), 0.25);
+        }
+    });
+});
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
 
@@ -209,21 +242,29 @@ function updateGridBounds() {
     const header = document.querySelector("header");
     const headerBottom = header === null ? 0 : header.getBoundingClientRect().bottom - canvasRect.top;
     const message = document.getElementById("round-message");
-    const messageTop = message === null ? mouseCanvas.height - 150 : message.getBoundingClientRect().top - canvasRect.top;
-    const side = Math.max(40, mouseCanvas.width * 0.06);
+    const messageTop = message === null ? canvasHeight - 150 : message.getBoundingClientRect().top - canvasRect.top;
+    const side = canvasWidth < 580 ? 43 : Math.max(40, canvasWidth * 0.06);
     const top = Math.max(100, headerBottom + 50);
     gridBounds = {
         x: side,
         y: top,
-        width: Math.max(150, mouseCanvas.width - side * 2),
+        width: Math.max(150, canvasWidth - side * 2),
         height: Math.max(100, messageTop - top - 25)
     };
 }
 
+let canvasWidth = 0;
+let canvasHeight = 0;
+
 function resizeCanvas() {
-    if (mouseCanvas.clientWidth === 0 || mouseCanvas.clientHeight === 0) { return; }
     mouseCanvas.width = mouseCanvas.clientWidth;
     mouseCanvas.height = mouseCanvas.clientHeight;
+    if (canvasWidth === 0 || canvasHeight === 0) { return; }
+    // draw screen sharpness
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    mouseCanvas.width = Math.round(canvasWidth * ratio);
+    mouseCanvas.height = Math.round(canvasHeight * ratio);
+    canvasContext.setTransform(ratio, 0, 0, ratio, 0, 0);
     updateGridBounds();
     drawFrame();
 }
@@ -258,7 +299,7 @@ function drawPitchGrid() {
     const lowest = semitoneShifts[0] + octaveShifts[octaveShifts.length - 1];
     const highest = semitoneShifts[semitoneShifts.length - 1] + octaveShifts[0];
 
-    canvasContext.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+    canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
     canvasContext.textAlign = "center";
     canvasContext.textBaseline = "middle";
 
@@ -452,10 +493,14 @@ function drawFrame() {
 
 // the mouse area picks the pitch
 function handleMouseMove(e) {
-    if (mouseCanvas.width === 0 || mouseCanvas.height === 0) { return; }
+    movePointer(e.offsetX, e.offsetY);
+}
+
+function movePointer(x, y) {    
+    if (canvasWidth === 0 || canvasHeight === 0) { return; }
     const bounds = gridBounds;
-    pointer.x = e.offsetX;
-    pointer.y = e.offsetY;
+    pointer.x = x;
+    pointer.y = y;
     pointer.inside = pointer.x >= bounds.x && pointer.x <= bounds.x + bounds.width && pointer.y >= bounds.y && pointer.y <= bounds.y + bounds.height;
 
     if (pointer.inside && !reducedMotion.matches) {
@@ -470,6 +515,23 @@ function handleMouseMove(e) {
     mouseRow = row;
     updateKeyboardHints();
 }
+
+// arrow keys can move the pointer when the canvas is focused
+mouseCanvas.addEventListener("keydown", function (e) {
+    const moves = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (!moves[e.key] || e.ctrlKey || e.altKey || e.metaKey) { return; }
+    e.preventDefault();
+    const bounds = gridBounds;
+    if (!pointer.inside) {
+        pointer.x = bounds.x + bounds.width / 2;
+        pointer.y = bounds.y + bounds.height / 2;
+    }
+    const step = e.shiftKey ? 30 : 8;
+    movePointer(
+        Math.max(bounds.x, Math.min(bounds.x + bounds.width, pointer.x + moves[e.key][0] * step)),
+        Math.max(bounds.y, Math.min(bounds.y + bounds.height, pointer.y + moves[e.key][1] * step))
+    );
+});
 
 mouseCanvas.addEventListener("mousemove", handleMouseMove);
 mouseCanvas.addEventListener("mouseleave", function () { pointer.inside = false; });
@@ -579,7 +641,7 @@ function beginGame() {
         introModal.showModal();
         return;
     }
-    if (document.activeElement) { document.activeElement.blur(); }
+    mouseCanvas.focus({ preventScroll: true });
     stopPreview();
     releaseAllNotes();
     if (resultModal.open) { resultModal.close(); }
@@ -683,7 +745,7 @@ function resetRound() {
 songSelect.addEventListener("change", function () {
     selectedSong = songs.find(function (song) { return song.id === songSelect.value; });
     resetRound();
-    songSelect.blur();
+    mouseCanvas.focus({ preventScroll: true });
 });
 
 helpButton.addEventListener("click", function () {
@@ -702,7 +764,7 @@ pauseButton.addEventListener("click", function () {
     } else {
         pauseGame();
     }
-    pauseButton.blur();
+    mouseCanvas.focus({ preventScroll: true });
 });
 
 document.getElementById("play-again-button").addEventListener("click", beginGame);

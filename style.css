@@ -1,5 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
-
+@font-face {
+    font-family: "Nunito Sans";
+    font-style: normal;
+    font-weight: 200 1000;
+    src: url("vendor/NunitoSans.ttf") format("truetype");
+    font-display: swap;
+}
 
 /* saving our custom variables*/
 /*light mode*/
@@ -172,3 +177,44 @@ dialog::backdrop { background: rgba(0, 0, 0, .65); }
 #score-value.scored { display: inline-block; color: #ffd98a; animation: score-pop .45s ease-out; }
 @keyframes score-pop { from { transform: scale(1.6); } to { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { #score-value.scored { animation: none; } }
+
+/* errors, focus and small screens */
+#sound-error { color: #f4c1b9; }
+[hidden] { display: none !important; }
+.no-script { position: fixed; z-index: 5; bottom: 0; background: black; color: white; padding: 1rem; }
+#mouse-canvas:focus-visible { outline: 3px solid #b9cee9; outline-offset: -4px; }
+
+@media (max-width: 1199px) {
+    .game-controls { max-width: 72%; }
+}
+@media (max-width: 839px) {
+    .game-controls { max-width: 73%; font-size: .76rem; gap: .35rem; }
+    .game-controls button, select { font-size: .76rem; }
+    .round-message { font-size: .85rem; bottom: 8.8rem; }
+    .pitch-info { bottom: 7.2rem; }
+    .keyboard-key { min-width: 2.5rem; padding: .8rem; }
+}
+@media (max-width: 580px) {
+    header { flex-direction: column; gap: .6rem; }
+    .title-and-score { display: flex; align-items: center; gap: 1rem; }
+    #score-text { margin: 0; font-size: .8rem; }
+    .game-controls { max-width: 100%; width: 100%; justify-content: flex-start; }
+    #song-progress { flex-basis: auto; margin-left: auto; }
+    .key-row { width: calc(100% - 1.5rem); max-width: none; gap: .25rem; bottom: 1.2rem; }
+    .keyboard-key { min-width: 0; flex: 1 1 0; padding: .65rem .15rem; font-size: 1rem; }
+    .keyboard-key small { font-size: .55rem; }
+    .pitch-info { bottom: 5.7rem; font-size: .64rem; }
+    .round-message { bottom: 7.2rem; font-size: .75rem; min-height: 2.1rem; display: flex; align-items: flex-end; justify-content: center; }
+    #intro-modal, #result-modal { padding: 1rem; }
+}
+@media (min-width: 1601px) {
+    .game-controls { font-size: .95rem; }
+    .round-message { font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-height: 559px) {
+    body { overflow-y: auto; }
+    #game { min-height: 560px; }
+}
