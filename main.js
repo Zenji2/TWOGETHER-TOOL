@@ -257,8 +257,8 @@ let canvasWidth = 0;
 let canvasHeight = 0;
 
 function resizeCanvas() {
-    mouseCanvas.width = mouseCanvas.clientWidth;
-    mouseCanvas.height = mouseCanvas.clientHeight;
+    canvasWidth = mouseCanvas.clientWidth;
+    canvasHeight = mouseCanvas.clientHeight;
     if (canvasWidth === 0 || canvasHeight === 0) { return; }
     // draw screen sharpness
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
