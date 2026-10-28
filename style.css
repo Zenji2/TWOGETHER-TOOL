@@ -32,11 +32,6 @@
 
 body {
     font-family: "Nunito Sans", sans-serif;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(27, 27, 27, 0.85)), url("background.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     background-color: #0b0f14;
     color: #eafffb;
     overflow: hidden;
