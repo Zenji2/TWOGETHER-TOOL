@@ -1,3 +1,68 @@
+﻿Zenji2,Wed Oct 28 14:43:28 2026 +1100,Fixed select song highlight,-Added better dropdown
+
+Zenji2,Wed Oct 28 14:23:26 2026 +1100,Aesthetic and looks revamp,-Changed the look of my game without changing any functioning
+-Just aesthetic purposes change
+-Added background image
+
+Zenji2,Wed Oct 28 13:24:31 2026 +1100,Debugging,-cleaned up index.html
+-typos
+
+Zenji2,Wed Oct 28 13:17:27 2026 +1100,Instructions, errors console, resizing and focus control,-Updated the instructions
+-Able to test the keys using mouse
+-Made font able to get offline rather than link
+-Better layout for smaller screen sizes
+
+Zenji2,Wed Oct 28 12:33:52 2026 +1100,Added effects,-Added mouse trails
+-Added ring around orb that shrinks
+-Fade the +100 and missed message
+-Dim screen when paused
+
+Zenji2,Wed Oct 28 00:21:11 2026 +1100,Added listening function,-Players are now able to listen to the song before playing to know how it sounds.
+-Stop and play button
+
+Zenji2,Tue Oct 27 23:04:41 2026 +1100,Added pause and resume function,-Users are now able to pause and resume the game whenever
+-It will play the note that you are currently at when paused/resumed
+
+Zenji2,Tue Oct 27 22:40:46 2026 +1100,Transition to game,-Transitioned the instrument into a game instrument synth, where players have to collaborate and work together to play the song.
+-Added orbs that appear on the screen that the mouse player moves to, and the keyboard player hits the corresponding key.
+
+Zenji2,Tue Oct 27 20:19:49 2026 +1100,Added songs.js, top buttons and fixes,-Able to play 3 songs
+-Added top header button controls
+-Fixed small issues
+
+Zenji2,Tue Oct 27 00:15:09 2026 +1100,Small fix,-deleted modal close
+
+Zenji2,Mon Oct 26 23:50:33 2026 +1100,Keyboard and visual update,-Made each keyboard letter button have their own data key
+-Add visual feedback above letters to show what semitones/octaves they are
+-Match the keyboard letter notes to what is being hovered over on canvas.
+
+Zenji2,Mon Oct 26 23:23:54 2026 +1100,Transitioning to octaves/semitones,-Instead of tones/reverb, I decided to switch to octaves/semitones, which is much better instrument and musical wise.
+-Swapped the blob for the grid layout prototype I experimented with.
+-Used AI to help clean up code/fixing/debugging, and help with making it look more aesthetically pleasing (colours, shape and layout of grid).
+-Using another tone.js
+
+Zenji2,Fri Oct 16 22:45:09 2026 +1100,Fix the jump in mapping and changed background,-Fixed the sudden jump when moving the mouse across a part of the canvas, causing it to jump from one end to the other. I made it more gradual.
+-Made the background look better using a gradient
+
+Zenji2,Thu Oct 15 11:30:16 2026 +1100,Experiment with colour,-Changed the colour palette of the app
+
+Zenji2,Thu Oct 15 11:05:39 2026 +1100,Changed tone/values,-Made the tone sound better because participants in testing said it didn't sound pleasant and could be better
+-Modified values of maprange, wetness, and filter
+
+Zenji2,Thu Oct 15 10:55:51 2026 +1100,Merged two branches to main,-Merged my circle and mouse feedback branch
+-Didn't work at first due to it using different canvas systems
+-Fixed and now work together
+
+Zenji2,Thu Oct 8 10:26:38 2026 +1100,Merge branch 'TwogetherExplorationFive',
+Zenji2,Thu Oct 8 10:24:53 2026 +1100,Merge branch 'TwogetherExplorationSix',
+Zenji2,Sun Oct 4 14:23:00 2026 +1100,Create commit history,
+Zenji2,Thu Oct 1 01:52:09 2026 +1000,Parallel Prototype 6 - Feedback/Layout,-Removed quadrant layout and text
+-Replaced with a blob circle in the middle of screen that changes size and glow radius depending on where you position mouse
+-Helps visualise feedback better
+
+Zenji2,Thu Oct 1 01:44:53 2026 +1000,Parallel Prototype Five - Changed Feedback/Layout,-Got rid of the quadrant layout
+-Replaced the feedback with a mouse trail that fades out
+
 Zenji2,Sat Sep 19 13:16:36 2026 +1000,Made layout bigger,-Changed height to 100% to fill whole screen instead of it being a small section.
 
 Zenji2,Sat Sep 19 13:13:23 2026 +1000,Made mouse function,-Added function to moving mouse
