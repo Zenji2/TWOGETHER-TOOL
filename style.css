@@ -292,3 +292,37 @@ button:hover:not(:disabled), select:hover {
 #mouse-canvas {
     background: transparent !important;
 }
+
+/* Styled Song Select Dropdown */
+select#song-select {
+    color: #eafffb;
+    background: rgba(14, 21, 30, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+select#song-select:hover,
+select#song-select:focus,
+select#song-select:focus-visible {
+    background: rgba(255, 155, 113, 0.25);
+    border-color: rgba(255, 155, 113, 0.7);
+    box-shadow: 0 0 12px rgba(255, 155, 113, 0.4);
+    outline: none !important;
+}
+
+select#song-select option {
+    background-color: #1a222d;
+    color: #eafffb;
+    padding: 8px;
+}
+
+select#song-select option:hover,
+select#song-select option:checked {
+    background-color: rgba(255, 155, 113, 0.6) !important;
+    color: #000000;
+}
